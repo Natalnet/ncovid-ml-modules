@@ -14,17 +14,12 @@ def read_csv_file(path, column_date, last_day, first_date=None):
     return df[(df[column_date] < last_day)][1:]
 
 
-db_folder = '/home/dunfrey/Documents/Doutorado UFRN/Artigos/araraquara/dbs/'
+db_folder = '../dbs/'
 data_limite = '2021-03-21'
 df_araraquara = read_csv_file(db_folder + 'df_araraquara.csv', 'date', data_limite, None)
 df_araraquara.confirmed = df_araraquara.confirmed.diff(7).dropna()
 df_araraquara.deaths = df_araraquara.deaths.diff(7).dropna()
 df_araraquara = df_araraquara.dropna()
-primeira_data = df_araraquara.date.min()
-df_parameters = read_csv_file(db_folder + 'df_sird_parameters.csv', 'Date', data_limite, primeira_data)
-df_principal_components_ori = read_csv_file(db_folder + 'principal_components_orig.csv', 'date', data_limite, primeira_data)
-df_principal_components_ant = read_csv_file(db_folder + 'principal_components_antec_lock.csv', 'date', data_limite, primeira_data)
-df_principal_components_not = read_csv_file(db_folder + 'principal_components_not_lock.csv', 'date', data_limite, primeira_data)
 
 # ---------------------
 
