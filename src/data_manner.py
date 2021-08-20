@@ -13,6 +13,27 @@ class DataTest:
         self._y_hat = None
         self._rmse = None
 
+    @property
+    def y_hat(self):
+        return self._y_hat
+
+    @y_hat.setter
+    def y_hat(self, y_hat_list):
+        self._y_hat = y_hat_list
+        self._rmse = list()
+        for i in range(len(self.y_hat)):
+            mse_i = mean_squared_error(self.y[i], self.y_hat[i])
+            rmse_i = sqrt(mse_i)
+            self._rmse.append(rmse_i)
+
+    @property
+    def rmse(self):
+        return self._rmse
+
+    @rmse.setter
+    def rmse(self, rmse_list):
+        self._rmse = rmse_list
+
 
 class DataTrain:
     def __init__(self, data, step_size, type_norm=None):
@@ -40,6 +61,10 @@ class DataTrain:
     @property
     def rmse(self):
         return self._rmse
+
+    @rmse.setter
+    def rmse(self, rmse_list):
+        self._rmse = rmse_list
 
     @staticmethod
     def to_supervised(data_, n_input):
