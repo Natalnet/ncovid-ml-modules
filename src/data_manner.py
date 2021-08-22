@@ -38,7 +38,7 @@ class DataTest:
 class DataTrain:
     def __init__(self, data, step_size, type_norm=None):
         x, y = self.to_supervised(data, step_size)
-        self.x_label = x[:, :, : 1]
+        self.x_labeled = x[:, :, : 1]
         self.x = x[:, :, 1:]  # self.x = x
         self.y = y.reshape((y.shape[0], y.shape[1], 1))
         self.type_norm = type_norm

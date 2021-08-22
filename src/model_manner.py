@@ -4,6 +4,8 @@ from tensorflow.keras.layers import Dense, Input, Dropout
 from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed
 from tensorflow.keras.models import Model
 
+import evaluator_manner
+
 
 class LSTMRegressor:
 
@@ -37,6 +39,20 @@ class LSTMRegressor:
                        batch_size=batch_size,
                        verbose=verbose,
                        callbacks=[self.stop_training])
+
+
+def grid_model(grid_size, model_config, train, epochs=100, batch_size=32, verbose=0):
+    regressor_list = list()
+    y_hat_list = list()
+    rmse_list = list()
+    for i in range(grid_size):
+        regressor_list.append(build_model(model_config))
+        regressor_list[i].fit_model(train, epochs, batch_size, verbose)
+        y_hat, rmse = evaluator_manner.evaluate_model(regressor_list[i].model, train)
+        y_hat_list.append(y_hat)
+        rmse_list.append(rmse)
+
+    return list(zip(regressor_list, y_hat_list, rmse_list))
 
 
 def build_model(configuration):
