@@ -3,6 +3,8 @@ from math import sqrt
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
+import model_manner
+
 
 def evaluate_model(model, data):
     yhat = model.predict(data.x, verbose=0)
@@ -31,5 +33,19 @@ def evaluate_forecast(model, train, test):
         history.x = np.vstack((history.x, test.x[i:i + 1:, ]))
         history.y = np.vstack((history.y, test.y[i:i + 1:, ]))
     # evaluate predictions days for each week
-    #predictions = np.array(predictions)
+    # predictions = np.array(predictions)
     return predictions, rmses
+
+
+def evaluate_model_n_repeat(n_repeat, model_config, train, epochs=100, batch_size=32, verbose=0):
+    regressor_list = list()
+    y_hat_list = list()
+    rmse_list = list()
+    for i in range(n_repeat):
+        regressor_list.append(model_manner.build_model(model_config))
+        regressor_list[i].fit_model(train, epochs, batch_size, verbose)
+        y_hat, rmse = evaluate_model(regressor_list[i].model, train)
+        y_hat_list.append(y_hat)
+        rmse_list.append(rmse)
+
+    return list(zip(regressor_list, y_hat_list, rmse_list))

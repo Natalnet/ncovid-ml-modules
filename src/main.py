@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import data_manner
-import model_manner
+import evaluator_manner
 
 
 def read_csv_file(path, column_date, last_day, first_date=None):
@@ -46,8 +46,8 @@ model_config = [week_size, 200, 0.0, train.x.shape[2]]
 # plt.show()
 
 # ----------- Sample 2 - griding-search for a single configuration model based over the train data
-grid_size = 3
-grid_result_list = model_manner.grid_model(grid_size, model_config, train, epochs=10, batch_size=32, verbose=0)
+n_repeat = 3
+grid_result_list = evaluator_manner.evaluate_model_n_repeat(n_repeat, model_config, train, epochs=10, batch_size=32, verbose=0)
 
 # grid_result_list[i][0]: LSTMRegressor object
 # grid_result_list[i][1]: y_hat list of the previous LSTMRegressor object
