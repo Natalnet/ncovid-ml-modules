@@ -1,0 +1,1 @@
+glossary_folder = '../doc/'

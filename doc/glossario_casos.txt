@@ -1,0 +1,10 @@
+newCases
+cases
+newConfirmed
+confirmed
+newInstance
+instances
+novosCasos
+casos
+confirmados
+novosConfirmados
