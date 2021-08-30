@@ -7,3 +7,7 @@ features = feature_manner.find_features(df_araraquara)
 
 print(features)
 print(features['cases'])
+
+# outputs
+# {'cases': 'confirmed', 'deaths': 'deaths'}
+# confirmed
