@@ -10,9 +10,9 @@ def all_vocabs_from_file(file):
     return [line.split()[0].upper() for line in open(configuration.glossary_folder + file, 'r').readlines()]
 
 
-_cases = all_vocabs_from_file('glossario_casos.txt')
+_cases = all_vocabs_from_file(configuration.glossary_filename_cases)
 
-_deaths = all_vocabs_from_file('glossario_mortes.txt')
+_deaths = all_vocabs_from_file(configuration.glossary_filename_deaths)
 
 features = {
     'cases': _cases,
