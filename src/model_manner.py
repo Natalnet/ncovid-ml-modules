@@ -4,6 +4,8 @@ from tensorflow.keras.layers import Dense, Input, Dropout
 from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed
 from tensorflow.keras.models import Model
 
+import configuration as pipeline_configs
+
 
 class LSTMRegressor:
 
@@ -30,18 +32,18 @@ class LSTMRegressor:
         model.compile(loss='mse', optimizer='adam')
         return model
 
-    def fit_model(self, data, epochs=100, batch_size=32, verbose=0):
+    def fit_model(self, data, verbose=0):
         self.model.fit(x=data.x,
                        y=data.y,
-                       epochs=epochs,
-                       batch_size=batch_size,
+                       epochs=pipeline_configs.model_train_epochs,
+                       batch_size=pipeline_configs.model_batch_size,
                        verbose=verbose,
                        callbacks=[self.stop_training])
 
 
-def build_model(configuration):
-    if configuration:
-        n_input, n_lstm_nodes, dropout, n_features = configuration
+def build_model(model_config):
+    if model_config:
+        n_input, n_lstm_nodes, dropout, n_features = model_config
         n_timesteps = n_outputs = n_input
         return LSTMRegressor(n_input, n_lstm_nodes, dropout, n_timesteps, n_features, n_outputs)
     return None
