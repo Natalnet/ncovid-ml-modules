@@ -32,13 +32,26 @@ class LSTMRegressor:
         model.compile(loss='mse', optimizer='adam')
         return model
 
-    def fit_model(self, data, verbose=0):
+    def _fitting(self, data, epochs, batch_size, verbose):
         self.model.fit(x=data.x,
                        y=data.y,
-                       epochs=pipeline_configs.model_train_epochs,
-                       batch_size=pipeline_configs.model_batch_size,
+                       epochs=epochs,
+                       batch_size=batch_size,
                        verbose=verbose,
                        callbacks=[self.stop_training])
+
+    def fit_model(self, data, epochs=None, batch_size=None, verbose=0):
+        if epochs and batch_size:
+            self._fitting(data, epochs, batch_size, verbose)
+        elif epochs and not batch_size:
+            self._fitting(data, epochs, pipeline_configs.model_batch_size, verbose)
+        elif batch_size and not epochs:
+            self._fitting(data, pipeline_configs.model_train_epochs, batch_size, verbose)
+        else:
+            self._fitting(data,
+                          pipeline_configs.model_train_epochs,
+                          pipeline_configs.model_batch_size,
+                          verbose)
 
 
 def build_model(model_config):
