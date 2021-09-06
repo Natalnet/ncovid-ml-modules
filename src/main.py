@@ -46,17 +46,31 @@ model_config = [week_size, 200, 0.0, train.x.shape[2]]
 # plt.show()
 
 # ----------- Sample 2 - griding-search for a single configuration model based over the train data
-n_repeat = 3
-grid_result_list = evaluator_manner.evaluate_model_n_repeat(n_repeat, model_config, train, epochs=10, batch_size=32, verbose=0)
+
+n_repeat = 2
+#grid_result_list = evaluator_manner.evaluate_model_n_repeat(n_repeat, model_config, train, epochs=10, batch_size=32, verbose=0)
+
+model_config_dict = {'n_input': [7, 14],
+                    'n_lstm_nodes': [100, 200],
+                    'dropout': [0.0],
+                    'n_features': [train.x.shape[2]],
+                    'epochs': [5, 10],
+                    'batch_size': [32]
+                    }
+# grid_search_params (n_repeat, model_config_dict, data, verbose=0)
+gridsearch_result_list = evaluator_manner.grid_search_params(n_repeat, model_config_dict, data, verbose=0)
+
+for i in gridsearch_result_list:
+    print(i)
 
 # grid_result_list[i][0]: LSTMRegressor object
 # grid_result_list[i][1]: y_hat list of the previous LSTMRegressor object
 # grid_result_list[i][2]: rmse list of the previous LSTMRegressor object
+  
+# for i in range(len(grid_result_list)):
+#     print(sum(grid_result_list[i][2]))
 
-for i in range(len(grid_result_list)):
-    print(sum(grid_result_list[i][2]))
-
-plt.rcParams["figure.figsize"] = (20, 5)
-plt.plot(train.y.reshape(train.y.shape[0], train.y.shape[1])[:, :1], label='original')
-plt.plot(grid_result_list[0][1].reshape(grid_result_list[0][1].shape[0], grid_result_list[0][1].shape[1])[:, :1], label='predicted')
-plt.show()
+# plt.rcParams["figure.figsize"] = (20, 5)
+# plt.plot(train.y.reshape(train.y.shape[0], train.y.shape[1])[:, :1], label='original')
+# plt.plot(grid_result_list[0][1].reshape(grid_result_list[0][1].shape[0], grid_result_list[0][1].shape[1])[:, :1], label='predicted')
+# plt.show()
