@@ -1,0 +1,51 @@
+{
+  "title": "ML COVID-19 glossary for multiple languages",
+  "author": "NatalNet NCovid",
+  "published_at": 2021,
+  "wordlist": [
+    {
+      "id": 0,
+      "name": "cases",
+      "definition": "COVID-19 confirmed daily cases",
+      "synonyms": [
+        "cases",
+        "casos",
+        "newCases",
+        "novosCasos",
+        "instance",
+        "instancia",
+        "confirmed",
+        "confirmados",
+        "sintomaticos",
+        "symptomatics"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "recovered",
+      "definition": "COVID-19 daily recovered",
+      "synonyms": [
+        "recovered",
+        "recuperados",
+        "vacinados",
+        "vaccinated"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "deaths",
+      "definition": "COVID-19 confirmed daily deaths",
+      "synonyms": [
+        "deaths",
+        "mortes",
+        "dead",
+        "mortos",
+        "perdas",
+        "obitos",
+        "deceased",
+        "dead",
+        "newDeaths"
+      ]
+    }
+  ]
+}
