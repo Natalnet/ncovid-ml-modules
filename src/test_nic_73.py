@@ -1,13 +1,21 @@
 import pandas as pd
-import feature_manner
+import glossary_manner
+from enums import feature_enum
 
 df_araraquara = pd.read_csv('../dbs/df_araraquara.csv')
+print(df_araraquara.columns)
 
-features = feature_manner.find_features(df_araraquara)
 
-print(features)
-print(features['cases'])
+glossary_1 = glossary_manner.Glossary()
+glossary_1.find_column(df_araraquara.columns, type_feat=feature_enum.Feature.DEATHS)
+print(glossary_1.features_dict)
+# {'deaths': 'deaths'}
 
-# outputs
-# {'cases': 'confirmed', 'deaths': 'deaths'}
-# confirmed
+glossary_2 = glossary_manner.create_glossary(df_araraquara.columns)
+print(glossary_2.features_dict)
+# {'cases': 'confirmed'}
+
+glossary_3 = glossary_manner.create_glossary(df_araraquara.columns,
+                                             feat_preset=feature_enum.BaseCollecting.EPIDEMIOLOGICAL)
+print(glossary_3.features_dict)
+# {'cases': 'confirmed', 'recovered': None, 'deaths': 'deaths'}
