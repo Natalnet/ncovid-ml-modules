@@ -3,7 +3,6 @@ from math import sqrt
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
-
 class DataTest:
     def __init__(self, data, type_norm=None):
         self.x = data[:, :, 1:]  # self.x = x
@@ -94,6 +93,9 @@ def build_data(data, step_size, size_data_test, type_norm=None):
     test = DataTest(data_test, type_norm)
     return train, test
 
+def build_data_prediction(data, step_size):
+    val = [data[index: index+step_size] for index in range(0, len(data), step_size)]
+    return np.array(val)
 
 def split_train_test(data, n_test, n_days):
     # makes dataset multiple of n_days
