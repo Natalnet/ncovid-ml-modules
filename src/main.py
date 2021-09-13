@@ -1,8 +1,8 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 
 import data_manner
 import evaluator_manner
+import plot_manner
 
 
 def read_csv_file(path, column_date, last_day, first_date=None):
@@ -62,6 +62,10 @@ gridsearch_result_list = evaluator_manner.grid_search_params(n_repeat, model_con
 
 for i in gridsearch_result_list:
     print(i)
+
+# (gridsearch_result_list, n_repeat, min_value, max_value)
+# parameters min_value and max_value adjust the boxplot y-axis range
+plot_manner.boxplot_experiments(gridsearch_result_list, n_repeat, 10, 5)
 
 # grid_result_list[i][0]: LSTMRegressor object
 # grid_result_list[i][1]: y_hat list of the previous LSTMRegressor object
