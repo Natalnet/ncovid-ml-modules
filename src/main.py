@@ -67,7 +67,7 @@ for i in gridsearch_result_list:
     
 # (gridsearch_result_list, n_repeat, min_value, max_value)
 # parameters min_value and max_value adjust the boxplot y-axis range
-plot_manner.boxplot_experiments(gridsearch_result_list, n_repeat, 0, 0)
+plot_manner.boxplot_experiments(gridsearch_result_list, n_repeat)
 
 # grid_result_list[i][0]: LSTMRegressor object
 # grid_result_list[i][1]: y_hat list of the previous LSTMRegressor object

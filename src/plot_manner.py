@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
 
-def boxplot_grid_search(data, key, n_repeats, min_value, max_value):
+def boxplot_grid_search(data, key, n_repeats):
   random_dists = key
 
   fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -75,15 +75,16 @@ def boxplot_grid_search(data, key, n_repeats, min_value, max_value):
 
   # Set the axes ranges and axes labels
   ax1.set_xlim(0.5, num_boxes + 0.5)
-  top = max(max(data))+max_value
-  bottom = min(min(data))+min_value
+  top = np.max(data)+np.max(data)*0.05
+  bottom = np.min(data)-np.min(data)*0.05
+  print(top, bottom)
   ax1.set_ylim(bottom, top)
   ax1.set_xticklabels(np.repeat(random_dists, 1),
                       rotation=70, fontsize=8)
 
   plt.show()
   
-def boxplot_experiments(gridsearch_result_list, n_repeats, min_value, max_value):
+def boxplot_experiments(gridsearch_result_list, n_repeats):
   
   # parse list to boxplot_gridsearch input
   # call it
@@ -93,4 +94,4 @@ def boxplot_experiments(gridsearch_result_list, n_repeats, min_value, max_value)
     key_list.append(str(experiment['config']))
     data_list.append(experiment['n_rmse_distribution'])
     
-  boxplot_grid_search(data_list, key_list, n_repeats, min_value, max_value)
+  boxplot_grid_search(data_list, key_list, n_repeats)
