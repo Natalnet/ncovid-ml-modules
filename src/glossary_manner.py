@@ -1,5 +1,3 @@
-import json
-
 from enums import feature_enum
 
 
@@ -27,11 +25,14 @@ class Glossary:
         Extract all features that may is contained in json glossary file
         :return: glossary list
         """
+        import json
         import configuration as pipeline_configs
 
         file = open(pipeline_configs.doc_folder + pipeline_configs.glossary)
         data = json.load(file)
-        self.__vocabulary = data['wordlist']
+        file.close()
+        if data:
+            self.__vocabulary = data['wordlist']
 
     @staticmethod
     def find_feature_glossary(all_columns, type_feat, glossary_list):
@@ -64,6 +65,15 @@ class Glossary:
         type_feat_name = type_feat.value
         self.features_dict[type_feat_name] = self.find_feature_glossary(df_columns, type_feat_name, self.__vocabulary)
 
+    def find_base_case_columns(self, df_columns):
+        """
+        :param df_columns: df columns list
+        """
+        infected = feature_enum.Feature.CASES.value
+        deceased = feature_enum.Feature.DEATHS.value
+        self.features_dict[infected] = self.find_feature_glossary(df_columns, infected, self.__vocabulary)
+        self.features_dict[deceased] = self.find_feature_glossary(df_columns, deceased, self.__vocabulary)
+
     def find_epidemiological_columns(self, df_columns):
         """
         :param df_columns: df columns list
@@ -90,10 +100,9 @@ def create_glossary(df_columns,
     if feat_preset is feature_enum.BaseCollecting.EPIDEMIOLOGICAL:
         glossary.find_epidemiological_columns(df_columns)
     else:
-        if type_feat is not None:
-            glossary.find_column(df_columns, type_feat)
+        if feat_preset is feature_enum.BaseCollecting.BASE:
+            glossary.find_base_case_columns(df_columns)
         else:
-            if feat_preset is feature_enum.BaseCollecting.ONE:
-                glossary.find_column(df_columns)
+            glossary.find_column(df_columns, type_feat)
 
     return glossary

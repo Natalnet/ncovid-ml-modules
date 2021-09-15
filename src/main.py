@@ -12,6 +12,8 @@ print(glossary_1.features_dict)
 # {'deaths': 'deaths'}
 
 glossary_2 = glossary_manner.create_glossary(df_araraquara.columns)
+glossary_2.find_column(df_araraquara.columns, type_feat=feature_enum.Feature.DEATHS)
+glossary_2.find_column(df_araraquara.columns, type_feat=feature_enum.Feature.RECOVERED)
 print(glossary_2.features_dict)
 # {'cases': 'confirmed'}
 
@@ -19,3 +21,8 @@ glossary_3 = glossary_manner.create_glossary(df_araraquara.columns,
                                              feat_preset=feature_enum.BaseCollecting.EPIDEMIOLOGICAL)
 print(glossary_3.features_dict)
 # {'cases': 'confirmed', 'recovered': None, 'deaths': 'deaths'}
+
+glossary_4 = glossary_manner.create_glossary(df_araraquara.columns,
+                                             feat_preset=feature_enum.BaseCollecting.BASE)
+print(glossary_4.features_dict)
+# {'cases': 'confirmed', 'deaths': 'deaths'}

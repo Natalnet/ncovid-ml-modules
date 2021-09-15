@@ -10,5 +10,5 @@ class Feature(Enum):
 
 class BaseCollecting(Enum):
     ONE = 0
-    ALL = 1
+    BASE = 1
     EPIDEMIOLOGICAL = 2
