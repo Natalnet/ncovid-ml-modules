@@ -7,13 +7,11 @@ Created on Tue Sep 21 15:59:13 2021
 """
 
 import pandas as pd
-from enums import feature_enum
 import matplotlib.pyplot as plt
 
 import data_manner
 import evaluator_manner
 import plot_manner
-import glossary_manner
 
 def read_csv_file(path, column_date, last_day, first_date=None):
     df = pd.read_csv(path)
