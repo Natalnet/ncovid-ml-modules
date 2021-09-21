@@ -4,6 +4,8 @@ from tensorflow.keras.layers import Dense, Input, Dropout
 from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed
 from tensorflow.keras.models import Model
 
+import configuration as pipeline_configs
+
 
 class LSTMRegressor:
 
@@ -15,7 +17,8 @@ class LSTMRegressor:
         self.n_features = n_features
         self.n_outputs = n_outputs
         self.model = self.__model_architecture()
-        self.stop_training = EarlyStopping(monitor='loss', mode='min', verbose=0, patience=50)
+        self.stop_training = EarlyStopping(monitor='loss', mode='min', verbose=0,
+                                           patience=pipeline_configs.model_patience_earlystop)
 
     def __model_architecture(self):
         inputs = Input(shape=(self.n_timesteps, self.n_features))
@@ -30,18 +33,31 @@ class LSTMRegressor:
         model.compile(loss='mse', optimizer='adam')
         return model
 
-    def fit_model(self, data, epochs=100, batch_size=32, verbose=0):
-        self.model.fit(x=data.x,
-                       y=data.y,
+    def __fitting(self, x, y, epochs, batch_size, verbose):
+        self.model.fit(x=x,
+                       y=y,
                        epochs=epochs,
                        batch_size=batch_size,
                        verbose=verbose,
                        callbacks=[self.stop_training])
 
+    def fit_model(self, data, epochs=None, batch_size=None, verbose=0):
+        if epochs and batch_size:
+            self.__fitting(data.x, data.y, epochs, batch_size, verbose)
+        elif epochs and not batch_size:
+            self.__fitting(data.x, data.y, epochs, pipeline_configs.model_batch_size, verbose)
+        elif batch_size and not epochs:
+            self.__fitting(data.x, data.y, pipeline_configs.model_train_epochs, batch_size, verbose)
+        else:
+            self.__fitting(data.x, data.y,
+                           pipeline_configs.model_train_epochs,
+                           pipeline_configs.model_batch_size,
+                           verbose)
 
-def build_model(configuration):
-    if configuration:
-        n_input, n_lstm_nodes, dropout, n_features = configuration
+
+def build_model(model_config):
+    if model_config:
+        n_input, n_lstm_nodes, dropout, n_features = model_config
         n_timesteps = n_outputs = n_input
         return LSTMRegressor(n_input, n_lstm_nodes, dropout, n_timesteps, n_features, n_outputs)
     return None
