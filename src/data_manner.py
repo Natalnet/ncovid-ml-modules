@@ -94,16 +94,8 @@ def build_data(data, step_size, size_data_test, type_norm=None):
     return train, test
 
 def build_data_prediction(data, step_size):
-<<<<<<< HEAD
-    window = []
-    for index in range(0, len(data), step_size):
-        if len(data[index: index+step_size]) == step_size:
-            window.append(data[index: index+step_size])
-    return np.array(window)
-=======
     val = [data[index: index+step_size] for index in range(0, len(data), step_size)]
     return np.array(val)
->>>>>>> 53002a1cad3cbe644d7ac9e14d4468b88b75f3bf
 
 def split_train_test(data, n_test, n_days):
     # makes dataset multiple of n_days
