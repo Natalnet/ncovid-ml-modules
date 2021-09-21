@@ -3,7 +3,12 @@ from math import sqrt
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
+import itertools as it
+
+from sklearn.model_selection import GridSearchCV
+
 import model_manner
+import data_manner
 
 
 def evaluate_model(model, data):
@@ -49,3 +54,38 @@ def evaluate_model_n_repeat(n_repeat, model_config, train, epochs=100, batch_siz
         rmse_list.append(rmse)
 
     return list(zip(regressor_list, y_hat_list, rmse_list))
+
+def grid_search_params(n_repeat, model_config_dict, data, verbose=0):
+
+    my_dict_model = model_config_dict
+
+    # mount all model conficguration in the dictionary
+    combinations = it.product(*(my_dict_model[param_name] for param_name in my_dict_model))
+    combinations_configs = list(combinations)
+
+    grid_search_result = list()
+
+    # iterate around those combinations
+    for config in combinations_configs:
+        # split the model configuratioon and the evaluate configuration
+        current_model_config = config[:-2]  
+        # epochs and batch size are differentially treaties
+        epoch, bs = config[-2:]
+
+        # building the data according with the current model configuration
+        week_size = current_model_config[0]
+        train, test = data_manner.build_data(data, step_size=week_size, size_data_test=21)
+
+        # unique config evaluation for 'n' times
+        grid_repeat_unique_config = evaluate_model_n_repeat(n_repeat, current_model_config, train, epochs=epoch, batch_size=bs, verbose=verbose)
+
+        evaluate_n_repeat_config = list()
+        # iterate in the unique repeat configuration and summing the evaluation metric for each 'n' time.
+        for uniq_config in grid_repeat_unique_config:
+            evaluate_n_repeat_config.append(np.round(sum(uniq_config[2]), 3))
+        
+        # creating a dict for each configuration and result
+        config_results_dict = {'config': config, 'n_rmse_distribution': evaluate_n_repeat_config}
+        
+        grid_search_result.append(config_results_dict)
+    return grid_search_result
