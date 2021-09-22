@@ -80,12 +80,14 @@ def grid_search_params(n_repeat, model_config_dict, data, verbose=0):
         grid_repeat_unique_config = evaluate_model_n_repeat(n_repeat, current_model_config, train, epochs=epoch, batch_size=bs, verbose=verbose)
 
         evaluate_n_repeat_config = list()
+        model_list = list()
         # iterate in the unique repeat configuration and summing the evaluation metric for each 'n' time.
         for uniq_config in grid_repeat_unique_config:
             evaluate_n_repeat_config.append(np.round(sum(uniq_config[2]), 3))
+            model_list.append(uniq_config[0])
         
         # creating a dict for each configuration and result
-        config_results_dict = {'config': config, 'n_rmse_distribution': evaluate_n_repeat_config}
+        config_results_dict = {'config': config, 'n_rmse_distribution': evaluate_n_repeat_config, 'model_list': model_list}
         
         grid_search_result.append(config_results_dict)
     return grid_search_result

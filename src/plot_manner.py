@@ -9,6 +9,7 @@ Created on Mon Sep  6 15:47:41 2021
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
+import datetime
 
 def boxplot_grid_search(data, key, n_repeats):
   random_dists = key
@@ -95,3 +96,23 @@ def boxplot_experiments(gridsearch_result_list, n_repeats):
     data_list.append(experiment['n_rmse_distribution'])
     
   boxplot_grid_search(data_list, key_list, n_repeats)
+    
+def build_data_from_trained_model(data, model):
+  return model.predict(data.x)
+
+def plot_predictions(data, model, last_date):
+  # create x-axis from last_date
+  
+  # get model prediction from data
+  predictions = build_data_from_trained_model(data, model)
+  plt.rcParams["figure.figsize"] = (15,5)
+  plt.plot(data.y.flatten(), label='Real Data')
+  plt.plot(predictions.flatten(), label='Predicted')
+  #plt.axvspan(test.shape[0]-n_test, test.shape[0]-1, color='red', alpha=0.1)
+  plt.xlabel("Days")
+  plt.ylabel("Biweekly moving average")
+  #plt.title("Forecast of model (%.2f, %.2f) from config " % (model[0], model[4]) + cfg_)
+  plt.legend()
+  #plt.xticks(x_tick)
+  plt.grid()
+  plt.show()
