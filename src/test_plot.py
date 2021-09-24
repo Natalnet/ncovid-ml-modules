@@ -29,8 +29,9 @@ df_araraquara = df_araraquara.dropna()
 
 # ---------------------
 
+
 data = [df_araraquara.deaths.values,
-        df_araraquara.confirmed.values]
+        df_araraquara.deaths.values]
 
 week_size = 7
 train, test = data_manner.build_data(data, step_size=week_size, size_data_test=21)
@@ -60,14 +61,12 @@ plot_manner.boxplot_experiments(gridsearch_result_list, n_repeat)
 
 print(gridsearch_result_list)
 
-print(gridsearch_result_list[0]['model_list'][0].model.predict(test.x, 1))
+y_hat = gridsearch_result_list[0]['model_list'][0].model.predict(test.x, 1)
+
+print(y_hat)
 
 print(test.y.shape)
 print(y_hat.shape)
-
-plt.plot(test.y.flatten())
-plt.plot(y_hat.flatten())
-plt.show()
 
 y_hat = plot_manner.build_data_from_trained_model(test, gridsearch_result_list[0]['model_list'][0].model)
 
@@ -76,3 +75,10 @@ print(plot_manner.build_data_from_trained_model(test, gridsearch_result_list[0][
 model_example = gridsearch_result_list[0]['model_list'][0].model
 
 plot_manner.plot_predictions(test, model_example, last_date)
+
+plt.plot(train.x.flatten())
+plt.plot(data[0])
+plt.show()
+print(train.x)
+
+plot_manner.plot_predictions(train, model_example, last_date)
