@@ -1,91 +1,148 @@
-from math import sqrt
-
 import numpy as np
-from sklearn.metrics import mean_squared_error
 
-import itertools as it
-
-from sklearn.model_selection import GridSearchCV
-
-import model_manner
-import data_manner
+from data_manner import Train, Test
 
 
-def evaluate_model(model, data):
-    yhat = model.predict(data.x, verbose=0)
+class Evaluator:
+    def __init__(self, model=None, data_train=None, data_test=None, n_repeat=1):
+        self._data_train = data_train
+        self._data_test = data_test
+        self.n_repeat = n_repeat
+        self._model = model
+        self._models = list()
+        if model is not None:
+            self._models.append(model)
 
-    rmse_scores = list()
-    for i in range(len(yhat)):
-        mse = mean_squared_error(data.y[i], yhat[i])
-        rmse = sqrt(mse)
-        rmse_scores.append(rmse)
+    @property
+    def data_train(self):
+        return self._data_train
 
-    return yhat, rmse_scores
+    @data_train.setter
+    def data_train(self, train):
+        self._data_train = train
 
+    @property
+    def data_test(self):
+        return self._data_test
 
-def evaluate_forecast(model, train, test):
-    # walk-forward validation over each week
-    history = train
-    predictions = list()
-    rmses = list()
-    for i in range(len(test.x)):
-        # predict the week
-        yhat, rmse = evaluate_model(model, history)
-        # store the predictions
-        predictions.append(yhat)
-        rmses.append(rmse)
-        # get real observation and add to history for predicting the next week
-        history.x = np.vstack((history.x, test.x[i:i + 1:, ]))
-        history.y = np.vstack((history.y, test.y[i:i + 1:, ]))
-    # evaluate predictions days for each week
-    # predictions = np.array(predictions)
-    return predictions, rmses
+    @data_test.setter
+    def data_test(self, test):
+        self._data_test = test
 
+    @property
+    def model(self):
+        return self._model
 
-def evaluate_model_n_repeat(n_repeat, model_config, train, epochs=100, batch_size=32, verbose=0):
-    regressor_list = list()
-    y_hat_list = list()
-    rmse_list = list()
-    for i in range(n_repeat):
-        regressor_list.append(model_manner.build_model(model_config))
-        regressor_list[i].fit_model(train, epochs, batch_size, verbose)
-        y_hat, rmse = evaluate_model(regressor_list[i].model, train)
-        y_hat_list.append(y_hat)
-        rmse_list.append(rmse)
+    @model.setter
+    def model(self, new_model):
+        self._model = new_model
+        self._models.append(new_model)
 
-    return list(zip(regressor_list, y_hat_list, rmse_list))
+    @property
+    def models(self):
+        return self._models
 
-def grid_search_params(n_repeat, model_config_dict, data, verbose=0):
+    @models.setter
+    def models(self, new_models):
+        self._models = new_models
 
-    my_dict_model = model_config_dict
+    def clean_models(self):
+        self._models = list()
 
-    # mount all model conficguration in the dictionary
-    combinations = it.product(*(my_dict_model[param_name] for param_name in my_dict_model))
-    combinations_configs = list(combinations)
+    def evaluate_model(self, model=None, data_train=None, data_test=None):
+        """
+        Evaluate model over train and test
+        :param data_train: Specify train temporal series to evaluate or use the train temporal series inserted in class
+        :param data_test: Specify test temporal series to evaluate or use the test temporal series inserted in class
+        :return: predictions and rmses
+        """
 
-    grid_search_result = list()
+        if data_train is None:
+            data_train = self.data_train
+        if data_test is None:
+            data_test = self.data_test
+        if model is None:
+            model = self._model
 
-    # iterate around those combinations
-    for config in combinations_configs:
-        # split the model configuratioon and the evaluate configuration
-        current_model_config = config[:-2]  
-        # epochs and batch size are differentially treaties
-        epoch, bs = config[-2:]
+        # walk-forward validation over each week
+        history = data_train
+        predictions = list()
+        rmses = list()
+        for i in range(len(data_test.x)):
+            # predict the week
+            yhat, rmse = model.make_predictions(history)
+            # store the predictions
+            predictions.append(yhat)
+            rmses.append(rmse)
+            # get real observation and add to history for predicting the next week
+            history.x = np.vstack((history.x, data_test.x[i:i + 1:, ]))
+            history.y = np.vstack((history.y, data_test.y[i:i + 1:, ]))
+        # evaluate predictions days for each week
+        # predictions = np.array(predictions)
+        return predictions, rmses
 
-        # building the data according with the current model configuration
-        week_size = current_model_config[0]
-        train, test = data_manner.build_data(data, step_size=week_size, size_data_test=21)
+    def evaluate_model_n_times(self, model=None, train=None, test=None, n_repeat=None, verbose=0):
+        """
+        Fit and Evaluate a single model over train and test multiple times
+        :param model: Specify model to training and evaluate
+        :param train: Specify train temporal series to evaluate or use the train temporal series inserted in class
+        :param test: Specify test temporal series to evaluate or use the test temporal series inserted in class
+        :param n_repeat:
+        :param verbose: Specify training should be verbose or silent
+        :return: regressor_list with predictions and rmses for unique model
+        """
+        if train is None:
+            train = self.data_train
+        if test is None:
+            test = self.data_test
+        if model is None:
+            model = self._model
+        if n_repeat is None:
+            n_repeat = self.n_repeat
 
-        # unique config evaluation for 'n' times
-        grid_repeat_unique_config = evaluate_model_n_repeat(n_repeat, current_model_config, train, epochs=epoch, batch_size=bs, verbose=verbose)
+        regressor_list = list()
+        y_hat_list = list()
+        rmse_list = list()
+        for i in range(n_repeat):
+            regressor_list.append(model)
+            regressor_list[i].fit_model(train.x, train.y, verbose)
+            y_hat, rmse = self.evaluate_model(model, train, test)
+            y_hat_list.append(y_hat)
+            rmse_list.append(rmse)
 
-        evaluate_n_repeat_config = list()
-        # iterate in the unique repeat configuration and summing the evaluation metric for each 'n' time.
-        for uniq_config in grid_repeat_unique_config:
-            evaluate_n_repeat_config.append(np.round(sum(uniq_config[2]), 3))
-        
-        # creating a dict for each configuration and result
-        config_results_dict = {'config': config, 'n_rmse_distribution': evaluate_n_repeat_config}
-        
-        grid_search_result.append(config_results_dict)
-    return grid_search_result
+        return list(zip(regressor_list, y_hat_list, rmse_list))
+
+    def evaluate_n_models_n_times(self, list_models=None, train=None, test=None, n_repeat=1, verbose=0):
+        """
+        Fit and Evaluate multiple models over train and test multiple times
+        :param list_models: Specify model list to training and evaluate
+        :param train: Specify train temporal series to evaluate or use the train temporal series inserted in class
+        :param test: Specify test temporal series to evaluate or use the test temporal series inserted in class
+        :param verbose: Specify training should be verbose or silent
+        :return: regressors_list with predictions and rmses for any model from list models
+        """
+
+        if list_models is None:
+            list_models = self._models
+
+        regressors_list = list()
+
+        for model in list_models:
+            regressors_list.append(self.evaluate_model_n_times(model, train, test, n_repeat, verbose))
+            self._model = model
+
+        return regressors_list
+
+    def __str__(self):
+        if type(self._data_train) is Train and type(self._data_test) is Test:
+            return f'\nQuantity Models: {len(self._models)}' \
+                   f'\nLast Model added and settled: {self._model}' \
+                   f'\nData train: {self._data_train.x.shape}' \
+                   f'\nData test: {self._data_test.x.shape}' \
+                   f'\nRepetitions: {self.n_repeat}\n'
+
+        return f'\nQuantity Models: {len(self._models)}' \
+               f'\nLast Model added and settled: {self._model}' \
+               f'\nData train: {self._data_train}' \
+               f'\nData test: {self._data_test}' \
+               f'\nRepetitions: {self.n_repeat}\n'
