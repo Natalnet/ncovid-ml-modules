@@ -1,7 +1,7 @@
 # ncovid-ml-modules
 Machine Learning modules of the ncovid backend.
 
-This code runs on Python 3.7. The package list is [here](package-list). You can use [this yaml](environment.yaml) to create a simular anaconda enviroment using 
+This code runs on Python 3.7. The package list is [here](package-list). You can use [this yaml](environment.yml) to create a simular anaconda enviroment using 
 ```console
 conda env create --file environment.yml
 ```
