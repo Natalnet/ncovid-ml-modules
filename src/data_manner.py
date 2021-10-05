@@ -103,7 +103,6 @@ class Train(Data):
             in_start += 1
         return np.array(x), np.array(y)
 
-
 class Test(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
