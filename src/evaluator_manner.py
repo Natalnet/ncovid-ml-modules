@@ -1,6 +1,7 @@
 import numpy as np
 from data_manner import Train, Test
 
+
 class Evaluator:
     def __init__(self, model=None, data_train=None, data_test=None, n_repeat=1):
         self._data_train = data_train

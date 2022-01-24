@@ -1,5 +1,5 @@
 from enums import feature_enum
-import src.configs_manner as configs
+import configs_manner as configs
 
 
 class Glossary:
@@ -23,7 +23,7 @@ class Glossary:
 
     def fill_vocabulary_from_file(self):
         """
-        Extract all features that may is contained in json glossary file
+        Extract features that is containing in glossary file
         :return: glossary list
         """
         import json

@@ -1,8 +1,10 @@
 import json
 import sys
+import os.path
 
 sys.path.append('../')
 
+assert(os.path.isfile('../doc/configure.json')), 'Config file unreached'
 with open('../doc/configure.json') as json_file:
     data = json.load(json_file)
 

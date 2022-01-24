@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!Sam Price/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Sep  6 15:47:41 2021
