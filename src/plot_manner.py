@@ -9,6 +9,7 @@ Created on Mon Sep  6 15:47:41 2021
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
+import datetime
 
 def boxplot_grid_search(data, key, n_repeats):
   random_dists = key
@@ -95,3 +96,52 @@ def boxplot_experiments(gridsearch_result_list, n_repeats):
     data_list.append(experiment['n_rmse_distribution'])
     
   boxplot_grid_search(data_list, key_list, n_repeats)
+    
+def build_data_from_trained_model(data, model):
+  return model.predict(data.x)
+
+def create_date_axis(last_date, n_days):
+  dt = datetime.datetime.strptime(last_date, '%Y-%m-%d')
+  date_axis = list()
+
+  for i in range(n_days):
+    date_ = dt - datetime.timedelta(days=i)
+    date_axis.append(date_.strftime('%Y-%m-%d'))
+    
+  return date_axis[::-1]
+
+def create_x_tick(dates):
+  size = len(dates)
+  x_tick = list()
+  # 10 values in axis x (9 + the last one)
+  n_ticks = np.ceil(size/9)
+
+  for i in range(size):
+    if i % n_ticks == 0:
+      x_tick.append(dates[i])
+  x_tick.append(dates[-1])
+  return x_tick
+
+def plot_predictions(data, model, last_date):
+  
+  # get model prediction from data
+  predictions = build_data_from_trained_model(data, model)
+   
+  data_y_plot = data.y.flatten()
+  predictions_plot = predictions.flatten()
+  # create x-axis from last_date
+  date_series_plot = create_date_axis(last_date, data_y_plot.shape[0])
+  
+  x_tick = create_x_tick(date_series_plot)
+  
+  plt.rcParams["figure.figsize"] = (15,5)
+  plt.plot(date_series_plot, data_y_plot, label='Real Data')
+  plt.plot(date_series_plot, predictions_plot, label='Predicted')
+  #plt.axvspan(test.shape[0]-n_test, test.shape[0]-1, color='red', alpha=0.1)
+  plt.xlabel("Days")
+  plt.ylabel("Biweekly moving average")
+  #plt.title("Forecast of model (%.2f, %.2f) from config " % (model[0], model[4]) + cfg_)
+  plt.legend()
+  plt.xticks(x_tick)
+  plt.grid()
+  plt.show()
