@@ -3,7 +3,7 @@ from math import sqrt
 from sklearn.metrics import mean_squared_error
 from tensorflow.keras.callbacks import EarlyStopping
 
-import src.configs_manner as configs
+import configs_manner as configs
 
 
 class ModelInterface:

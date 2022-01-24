@@ -27,7 +27,6 @@ class Glossary:
         :return: glossary list
         """
         import json
-        import utils
 
         file = open(configs.glossary_file)
         data = json.load(file)

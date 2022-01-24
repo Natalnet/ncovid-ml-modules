@@ -51,6 +51,7 @@ class Evaluator:
     def evaluate_model(self, model=None, data_train=None, data_test=None):
         """
         Evaluate model over train and test
+        :param model: model trained
         :param data_train: Specify train temporal series to evaluate or use the train temporal series inserted in class
         :param data_test: Specify test temporal series to evaluate or use the test temporal series inserted in class
         :return: predictions and rmses
