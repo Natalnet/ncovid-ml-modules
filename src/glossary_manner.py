@@ -1,4 +1,5 @@
 from enums import feature_enum
+import src.configs_manner as configs
 
 
 class Glossary:
@@ -26,9 +27,9 @@ class Glossary:
         :return: glossary list
         """
         import json
-        import configuration as pipeline_configs
+        import utils
 
-        file = open(pipeline_configs.doc_folder + pipeline_configs.glossary)
+        file = open(configs.glossary_file)
         data = json.load(file)
         file.close()
         if data:
