@@ -1,4 +1,5 @@
 from enums import feature_enum
+import configs_manner as configs
 
 
 class Glossary:
@@ -22,13 +23,12 @@ class Glossary:
 
     def fill_vocabulary_from_file(self):
         """
-        Extract all features that may is contained in json glossary file
+        Extract features that is containing in glossary file
         :return: glossary list
         """
         import json
-        import configuration as pipeline_configs
 
-        file = open(pipeline_configs.doc_folder + pipeline_configs.glossary)
+        file = open(configs.glossary_file)
         data = json.load(file)
         file.close()
         if data:

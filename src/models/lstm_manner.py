@@ -1,12 +1,8 @@
-import sys
-
 import numpy as np
+from models.model_interface import ModelInterface
 from tensorflow.keras.layers import Dense, Input, Dropout
 from tensorflow.keras.layers import LSTM, RepeatVector, TimeDistributed
 from tensorflow.keras.models import Model
-
-sys.path.append('../')
-from models.model_interface import ModelInterface
 
 
 class ModelLSTM(ModelInterface):

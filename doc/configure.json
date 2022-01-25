@@ -1,0 +1,16 @@
+{
+  "ncovid": "ML COVID-19 configure file",
+  "author": "NatalNet NCovid",
+  "published_at": 2021,
+  "folder_configs": {
+    "docs_path": "../doc/",
+    "data_path": "../dbs/",
+    "model_path": "fitted_model/",
+    "glossary_file": "glossary.json"
+  },
+  "model_configs": {
+    "batch_size": 32,
+    "epochs": 100,
+    "patience_earlystop": 50
+  }
+}
