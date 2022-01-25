@@ -1,11 +1,19 @@
 from math import sqrt
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_squared_error
 
 
 class DataConstructor:
     def __init__(self, step_size, is_training=False, type_norm=None):
+        """Class that constructs the data correctly to the model.
+
+        Args:
+            step_size (int): size of each sample of walking forward step
+            is_training (bool, optional): Flag that descripts if data is to train, test or both. Defaults to False.
+            type_norm ([TO DO], optional): [TO DO]. Defaults to None.
+        """
         self.step_size = step_size
         self.is_training = is_training
         self.type_norm = type_norm
@@ -42,7 +50,17 @@ class DataConstructor:
         return np.array(data).T
 
     def windowing_data(self, data):
-        return np.array(np.split(data, len(data) / self.step_size))
+        check_size = data.shape[0] // self.step_size 
+        if check_size * self.step_size != data.shape[0]:
+            data = data[:check_size * self.step_size]
+        return np.array(np.split(data, len(data) // self.step_size))
+    
+    @staticmethod
+    def read_csv_file(path, column_date, last_day, first_date=None, is_accumlated = False):
+        df = pd.read_csv(path)
+        if first_date is not None:
+            return df[(df[column_date] < last_day) & (df[column_date] >= first_date)]
+        return df[(df[column_date] < last_day)][1:]
 
 
 class Data:
@@ -75,11 +93,10 @@ class Data:
     def rmse(self, rmse_list):
         self._rmse = rmse_list
 
-
 class Train(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
-        x, y = Train.walk_forward(data, step_size)
+        x, y = self.walk_forward(data, step_size)
         self.x_labeled = x[:, :, : 1]
         self.x = x[:, :, 1:]  # self.x = x
         self.y = y.reshape((y.shape[0], y.shape[1], 1))
