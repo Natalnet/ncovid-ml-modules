@@ -1,9 +1,11 @@
-import pandas as pd
 from enums import feature_enum
 
 import glossary_manner
+import data_manner
 
-df_araraquara = pd.read_csv('../dbs/df_araraquara.csv')
+db_folder = '../dbs/'
+last_date = '2021-03-21'
+df_araraquara = data_manner.DataConstructor.read_csv_file(db_folder + 'df_araraquara.csv', 'date', last_date, None)
 print(df_araraquara.columns)
 
 ###### glossary test code
