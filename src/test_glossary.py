@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 21 15:58:53 2021
-
-@author: davi
-"""
-
 import pandas as pd
 from enums import feature_enum
 

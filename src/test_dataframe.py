@@ -30,10 +30,12 @@ data = [df_araraquara.deaths.values, df_araraquara.confirmed.values]
 # FORMA 1
 step_size = 7
 test_size = step_size * 3
-construtor_dados_1 = data_manner.DataConstructor(step_size=step_size, is_training=True)
-train, test = construtor_dados_1.build_train_test(data, size_data_test=test_size)
-
+construtor_dados_1 = data_manner.DataConstructor(is_training=True)
+train, test = construtor_dados_1.build_train_test(data)
+print(train.x[-1], train.x.shape, train.y.shape)
+print("----------")
 # FORMA 2
-construtor_dados_2 = data_manner.DataConstructor(step_size=step_size)
+construtor_dados_2 = data_manner.DataConstructor()
 train = construtor_dados_2.build_train(data)
 test = construtor_dados_2.build_test(data)
+print(train.x[-1], train.x.shape, train.y.shape)
