@@ -9,8 +9,16 @@
     "glossary_file": "glossary.json"
   },
   "model_configs": {
+    "window_size": 7,
     "batch_size": 32,
     "epochs": 100,
-    "patience_earlystop": 50
+    "patience_earlystop": 50,
+    "is_output_in_input": "False",
+    "is_training": "True"
+  },
+  "data_configs":{
+    "window_size": 7,
+    "data_test_size": 21,
+    "type_norm": ""
   }
 }

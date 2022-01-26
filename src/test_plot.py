@@ -13,6 +13,7 @@ import data_manner
 import evaluator_manner
 import plot_manner
 
+
 def read_csv_file(path, column_date, last_day, first_date=None):
     df = pd.read_csv(path)
     if first_date is not None:
@@ -42,19 +43,18 @@ model_config = [week_size, 200, 0.0, train.x.shape[2]]
 n_repeat = 2
 
 model_config_dict = {'n_input': [7],
-                    'n_lstm_nodes': [100],
-                    'dropout': [0.0],
-                    'n_features': [train.x.shape[2]],
-                    'epochs': [5],
-                    'batch_size': [32]
-                    }
+                     'n_lstm_nodes': [100],
+                     'dropout': [0.0],
+                     'n_features': [train.x.shape[2]],
+                     'epochs': [5],
+                     'batch_size': [32]
+                     }
 # grid_search_params (n_repeat, model_config_dict, data, verbose=0)
 gridsearch_result_list = evaluator_manner.grid_search_params(n_repeat, model_config_dict, data, verbose=0)
 
 for i in gridsearch_result_list:
     print(i)
-    
-    
+
 # (gridsearch_result_list, n_repeat, min_value, max_value)
 # parameters min_value and max_value adjust the boxplot y-axis range
 plot_manner.boxplot_experiments(gridsearch_result_list, n_repeat)

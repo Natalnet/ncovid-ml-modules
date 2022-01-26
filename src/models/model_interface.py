@@ -3,7 +3,7 @@ from math import sqrt
 from sklearn.metrics import mean_squared_error
 from tensorflow.keras.callbacks import EarlyStopping
 
-import configs_manner as configs
+import configs_manner
 
 
 class ModelInterface:
@@ -15,7 +15,7 @@ class ModelInterface:
         self.n_outputs = None
         self.predictions = None
         self.stop_training = EarlyStopping(monitor='loss', mode='min', verbose=0,
-                                           patience=configs.model_patience_earlystop)
+                                           patience=configs_manner.model_patience_earlystop)
         if n_outputs is None:
             self.n_outputs = n_inputs
         self.model = None
@@ -33,8 +33,8 @@ class ModelInterface:
     def fit_model(self, x, y, verbose=0):
         self.model.fit(x=x,
                        y=y,
-                       epochs=configs.model_train_epochs,
-                       batch_size=configs.model_batch_size,
+                       epochs=configs_manner.model_train_epochs,
+                       batch_size=configs_manner.model_batch_size,
                        verbose=verbose,
                        callbacks=[self.stop_training])
         return True

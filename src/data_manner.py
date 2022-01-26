@@ -1,39 +1,49 @@
 from math import sqrt
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_squared_error
+
+import configs_manner
 
 
 class DataConstructor:
-    def __init__(self, step_size, is_training=False, type_norm=None):
-        self.step_size = step_size
+    def __init__(self, is_training=False):
+        """Class that constructs the data correctly to the model.
+        For editing more details in your data, use doc/configure.json file.
+
+        Args:
+            is_training (bool, optional): Flag that descripts if data is to train or not. Defaults to False.
+        """
         self.is_training = is_training
-        self.type_norm = type_norm
+        self.window_size = configs_manner.data_window_size
+        self.type_norm = configs_manner.data_type_norm
+        self.data_test_size = configs_manner.data_data_test_size
 
     def build_train(self, data):
         if not self.is_training:
             data = self.reshape_data(data)
         data = self.windowing_data(data)
-        return Train(data, self.step_size, self.type_norm)
+        return Train(data, self.window_size, self.type_norm)
 
     def build_test(self, data):
         if not self.is_training:
             data = self.reshape_data(data)
         data = self.windowing_data(data)
-        return Test(data, self.step_size, self.type_norm)
+        return Test(data, self.window_size, self.type_norm)
 
-    def build_train_test(self, data, size_data_test):
+    def build_train_test(self, data):
         data = self.reshape_data(data)
-        data_train, data_test = self.split_data_train_test(data, size_data_test)
+        data_train, data_test = self.split_data_train_test(data, self.data_test_size)
         train = self.build_train(data_train)
         test = self.build_test(data_test)
         return train, test
 
     def split_data_train_test(self, data, n_test):
         # makes dataset multiple of n_days
-        data = data[data.shape[0] % self.step_size:]
+        data = data[data.shape[0] % self.window_size:]
         # make test set multiple of n_days
-        n_test -= n_test % self.step_size
+        n_test -= n_test % self.window_size
         # split into standard weeks
         train, test = data[:-n_test], data[-n_test:]
         return train, test
@@ -42,7 +52,17 @@ class DataConstructor:
         return np.array(data).T
 
     def windowing_data(self, data):
-        return np.array(np.split(data, len(data) / self.step_size))
+        check_size = data.shape[0] // self.window_size 
+        if check_size * self.window_size != data.shape[0]:
+            data = data[:check_size * self.window_size]
+        return np.array(np.split(data, len(data) // self.window_size))
+    
+    @staticmethod
+    def read_csv_file(path, column_date, last_day, first_date=None):
+        df = pd.read_csv(path)
+        if first_date is not None:
+            return df[(df[column_date] < last_day) & (df[column_date] >= first_date)]
+        return df[(df[column_date] < last_day)][1:]
 
 
 class Data:
@@ -75,13 +95,13 @@ class Data:
     def rmse(self, rmse_list):
         self._rmse = rmse_list
 
-
 class Train(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
-        x, y = Train.walk_forward(data, step_size)
-        self.x_labeled = x[:, :, : 1]
-        self.x = x[:, :, 1:]  # self.x = x
+        x, y = self.walk_forward(data, step_size)
+        # self.x_labeled = x[:, :, : 1]
+        if configs_manner.model_is_output_in_input: self.x = x
+        else: self.x = x[:, :, 1:]
         self.y = y.reshape((y.shape[0], y.shape[1], 1))
 
     @staticmethod
@@ -107,6 +127,7 @@ class Train(Data):
 class Test(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
-        self.x = data[:, :, 1:]  # self.x = x
-        self.y = data[:, :, :1]
+        if configs_manner.model_is_output_in_input: self.x = data[:-1, :, :]
+        else: self.x = data[:-1, :, 1:]
+        self.y = data[1:, :, :1]
         self.y = self.y.reshape((self.y.shape[0], self.y.shape[1], 1))
