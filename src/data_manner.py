@@ -1,7 +1,4 @@
 import numpy as np
-import pandas as pd
-from math import sqrt
-from sklearn.metrics import mean_squared_error
 
 import configs_manner
 from enums import model_enum
@@ -79,6 +76,7 @@ class DataConstructor:
         Returns:
             [Array of Arrays]: returns the dataframme in array format (not as pandas dataframe)
         """
+        import pandas as pd
 
         if repo and feature and begin and end is not None:
             dataframe = pd.read_csv(
@@ -129,6 +127,9 @@ class Data:
 
     @y_hat.setter
     def y_hat(self, y_hat_list):
+        from sklearn.metrics import mean_squared_error
+        from math import sqrt
+
         self._y_hat = y_hat_list
         self._rmse = list()
         for i in range(len(self.y_hat)):
