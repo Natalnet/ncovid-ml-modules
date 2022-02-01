@@ -1,8 +1,7 @@
-import pandas as pd
 import json
+import pandas as pd
 
-import data_manner
-import model_manner
+import data_manner, model_manner
 
 
 def predict_webrequest(responsed_data):
@@ -44,17 +43,22 @@ def load_model(train):
 
 def convert_output_to_json(output_of_prediction, rqt_data):
     returned_dictionaty = []
-    for date, value in zip(rqt_data.index[-len(output_of_prediction):], output_of_prediction):
+    for date, value in zip(
+        rqt_data.index[-len(output_of_prediction) :], output_of_prediction
+    ):
         returned_dictionaty.append({"date": date, "deaths": str(value)})
 
-    returned_json = json.dumps(str(returned_dictionaty), indent=3, separators=(",", ":"))
+    returned_json = json.dumps(
+        str(returned_dictionaty), indent=3, separators=(",", ":")
+    )
     return returned_json
 
 
 def predict(repo, path, feature, begin, end):
     requested_data = pd.read_csv(
         f"http://ncovid.natalnet.br/datamanager/repo/{repo}/path/{path}/feature/{feature}/begin/{begin}/end/{end}/as-csv",
-        index_col='date')
+        index_col="date",
+    )
 
     predicted_values = predict_for_rquest(requested_data)
 
@@ -63,6 +67,7 @@ def predict(repo, path, feature, begin, end):
     print(predictied_json)
 
     return predictied_json
+
 
 # como deve ser o retorno JSON
 # [

@@ -1,68 +1,117 @@
-from math import sqrt
-
 import numpy as np
 import pandas as pd
+from math import sqrt
 from sklearn.metrics import mean_squared_error
 
 import configs_manner
+from enums import model_enum
 
 
 class DataConstructor:
-    def __init__(self, is_training=False):
+    def __init__(self, is_predicting=False):
         """Class that constructs the data correctly to the model.
         For editing more details in your data, use doc/configure.json file.
-
+        
         Args:
-            is_training (bool, optional): Flag that descripts if data is to train or not. Defaults to False.
+            is_predicting (bool, optional): Flag that descripts if data is for testing. Defaults to False.
         """
-        self.is_training = is_training
-        self.window_size = configs_manner.data_window_size
-        self.type_norm = configs_manner.data_type_norm
-        self.data_test_size = configs_manner.data_data_test_size
+        if configs_manner.model_type == model_enum.Model.ARTIFICIAL.value:
+            self.window_size = configs_manner.model_infos["data_window_size"]
+            self.test_size_in_days = configs_manner.model_infos[
+                "data_test_size_in_days"
+            ]
+            self.type_norm = configs_manner.model_infos["data_type_norm"]
+
+            self.is_predicting = configs_manner.model_infos[
+                "model_is_predicting"
+            ]  # setado para treinamento
+            if is_predicting:
+                self.is_predicting = is_predicting
 
     def build_train(self, data):
-        if not self.is_training:
-            data = self.reshape_data(data)
-        data = self.windowing_data(data)
+        if self.is_predicting:
+            data = self.__reshape_data(data)
+        data = self.__windowing_data(data)
         return Train(data, self.window_size, self.type_norm)
 
     def build_test(self, data):
-        if not self.is_training:
-            data = self.reshape_data(data)
-        data = self.windowing_data(data)
+        if self.is_predicting:
+            data = self.__reshape_data(data)
+        data = self.__windowing_data(data)
         return Test(data, self.window_size, self.type_norm)
 
     def build_train_test(self, data):
-        data = self.reshape_data(data)
-        data_train, data_test = self.split_data_train_test(data, self.data_test_size)
+        data = self.__reshape_data(data)
+        data_train, data_test = self.__split_data_train_test(data)
         train = self.build_train(data_train)
         test = self.build_test(data_test)
         return train, test
 
-    def split_data_train_test(self, data, n_test):
+    def __split_data_train_test(self, data):
         # makes dataset multiple of n_days
-        data = data[data.shape[0] % self.window_size:]
+        data = data[data.shape[0] % self.window_size :]
         # make test set multiple of n_days
-        n_test -= n_test % self.window_size
+        n_test = self.test_size_in_days
+        n_test -= self.test_size_in_days % self.window_size
         # split into standard weeks
         train, test = data[:-n_test], data[-n_test:]
         return train, test
 
-    def reshape_data(self, data):
+    def __reshape_data(self, data):
         return np.array(data).T
 
-    def windowing_data(self, data):
-        check_size = data.shape[0] // self.window_size 
+    def __windowing_data(self, data):
+        check_size = data.shape[0] // self.window_size
         if check_size * self.window_size != data.shape[0]:
-            data = data[:check_size * self.window_size]
+            data = data[: check_size * self.window_size]
         return np.array(np.split(data, len(data) // self.window_size))
-    
-    @staticmethod
-    def read_csv_file(path, column_date, last_day, first_date=None):
-        df = pd.read_csv(path)
-        if first_date is not None:
-            return df[(df[column_date] < last_day) & (df[column_date] >= first_date)]
-        return df[(df[column_date] < last_day)][1:]
+
+    def collect_dataframe(self, path, repo=None, feature=None, begin=None, end=None):
+        """[summary]
+
+        Args:
+            path ([type]): [description]
+            repo ([type], optional): [description]. Defaults to None.
+            feature ([type], optional): [description]. Defaults to None.
+            begin ([type], optional): [description]. Defaults to None.
+            end ([type], optional): [description]. Defaults to None.
+
+        Returns:
+            [Array of Arrays]: returns the dataframme in array format (not as pandas dataframe)
+        """
+
+        if repo and feature and begin and end is not None:
+            dataframe = pd.read_csv(
+                f"http://ncovid.natalnet.br/datamanager/repo/{repo}/path/{path}/feature/{feature}/begin/{begin}/end/{end}/as-csv",
+                parse_dates=["date"],
+                index_col="date",
+            )
+        else:
+            dataframe = pd.read_csv(path, parse_dates=["date"], index_col="date",)
+
+        return self.__clean_dataframe(dataframe)
+
+    def __clean_dataframe(self, dataframe):
+        if configs_manner.model_infos["data_is_accumulated_values"]:
+            for column in dataframe.columns:
+                dataframe[column] = (
+                    dataframe[column]
+                    .diff(configs_manner.model_infos["data_window_size"])
+                    .dropna()
+                )
+
+        dataframe = dataframe.dropna()
+
+        def is_different_values(s):
+            a = s.to_numpy()  # s.values (pandas<0.24)
+            return (a[0] == a).all()
+
+        column_with_values = [
+            not (is_different_values(dataframe[column])) for column in dataframe.columns
+        ]
+        dataframe = dataframe.loc[:, column_with_values]
+
+        return [dataframe[col].values for col in dataframe.columns]
 
 
 class Data:
@@ -95,17 +144,21 @@ class Data:
     def rmse(self, rmse_list):
         self._rmse = rmse_list
 
+
 class Train(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
-        x, y = self.walk_forward(data, step_size)
-        # self.x_labeled = x[:, :, : 1]
-        if configs_manner.model_is_output_in_input: self.x = x
-        else: self.x = x[:, :, 1:]
+        x, y = self.__walk_forward(data, step_size)
+
+        if configs_manner.model_infos["model_is_output_in_input"]:
+            self.x = x
+        else:
+            self.x = x[:, :, 1:]
+
+        configs_manner.model_infos["data_n_features"] = self.x.shape[-1]
         self.y = y.reshape((y.shape[0], y.shape[1], 1))
 
-    @staticmethod
-    def walk_forward(data_, step_size):
+    def __walk_forward(self, data_, step_size):
         # flatten data
         data = data_.reshape((data_.shape[0] * data_.shape[1], data_.shape[2]))
         x, y = list(), list()
@@ -127,7 +180,11 @@ class Train(Data):
 class Test(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
-        if configs_manner.model_is_output_in_input: self.x = data[:-1, :, :]
-        else: self.x = data[:-1, :, 1:]
+
+        if configs_manner.model_infos["model_is_output_in_input"]:
+            self.x = data[:-1, :, :]
+        else:
+            self.x = data[:-1, :, 1:]
+
         self.y = data[1:, :, :1]
         self.y = self.y.reshape((self.y.shape[0], self.y.shape[1], 1))

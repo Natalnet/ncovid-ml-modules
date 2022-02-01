@@ -1,9 +1,8 @@
+import configs_manner
 from enums import feature_enum
-import configs_manner as configs
 
 
 class Glossary:
-
     def __init__(self, vocabulary=None):
         if vocabulary:
             self.__vocabulary = vocabulary
@@ -28,11 +27,11 @@ class Glossary:
         """
         import json
 
-        file = open(configs.glossary_file)
+        file = open(configs_manner.glossary_file)
         data = json.load(file)
         file.close()
         if data:
-            self.__vocabulary = data['wordlist']
+            self.__vocabulary = data["wordlist"]
 
     @staticmethod
     def find_feature_glossary(all_columns, type_feat, glossary_list):
@@ -43,7 +42,7 @@ class Glossary:
         :return: string column name or None
         """
         for g in glossary_list:
-            if g['name'] == type_feat:
+            if g["name"] == type_feat:
                 for column_name in all_columns:
                     if Glossary.in_glossary(column_name, g):
                         return column_name
@@ -51,9 +50,9 @@ class Glossary:
 
     @staticmethod
     def in_glossary(column_name, glossary_list):
-        if column_name.upper() in [each_synonym.upper()
-                                   for each_synonym
-                                   in glossary_list['synonyms']]:
+        if column_name.upper() in [
+            each_synonym.upper() for each_synonym in glossary_list["synonyms"]
+        ]:
             return True
         return False
 
@@ -63,7 +62,9 @@ class Glossary:
         :param type_feat: feature_enum.Feature type
         """
         type_feat_name = type_feat.value
-        self.features_dict[type_feat_name] = self.find_feature_glossary(df_columns, type_feat_name, self.__vocabulary)
+        self.features_dict[type_feat_name] = self.find_feature_glossary(
+            df_columns, type_feat_name, self.__vocabulary
+        )
 
     def find_base_case_columns(self, df_columns):
         """
@@ -71,8 +72,12 @@ class Glossary:
         """
         infected = feature_enum.Feature.CASES.value
         deceased = feature_enum.Feature.DEATHS.value
-        self.features_dict[infected] = self.find_feature_glossary(df_columns, infected, self.__vocabulary)
-        self.features_dict[deceased] = self.find_feature_glossary(df_columns, deceased, self.__vocabulary)
+        self.features_dict[infected] = self.find_feature_glossary(
+            df_columns, infected, self.__vocabulary
+        )
+        self.features_dict[deceased] = self.find_feature_glossary(
+            df_columns, deceased, self.__vocabulary
+        )
 
     def find_epidemiological_columns(self, df_columns):
         """
@@ -81,14 +86,22 @@ class Glossary:
         infected = feature_enum.Feature.CASES.value
         removed = feature_enum.Feature.RECOVERED.value
         deceased = feature_enum.Feature.DEATHS.value
-        self.features_dict[infected] = self.find_feature_glossary(df_columns, infected, self.__vocabulary)
-        self.features_dict[removed] = self.find_feature_glossary(df_columns, removed, self.__vocabulary)
-        self.features_dict[deceased] = self.find_feature_glossary(df_columns, deceased, self.__vocabulary)
+        self.features_dict[infected] = self.find_feature_glossary(
+            df_columns, infected, self.__vocabulary
+        )
+        self.features_dict[removed] = self.find_feature_glossary(
+            df_columns, removed, self.__vocabulary
+        )
+        self.features_dict[deceased] = self.find_feature_glossary(
+            df_columns, deceased, self.__vocabulary
+        )
 
 
-def create_glossary(df_columns,
-                    feat_preset=feature_enum.BaseCollecting.ONE,
-                    type_feat=feature_enum.Feature.CASES):
+def create_glossary(
+    df_columns,
+    feat_preset=feature_enum.BaseCollecting.ONE,
+    type_feat=feature_enum.Feature.CASES,
+):
     """
     :param df_columns: df columns list
     :param feat_preset: feature_enum.BaseCollecting type

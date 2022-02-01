@@ -75,13 +75,15 @@ class Evaluator:
             predictions.append(yhat)
             rmses.append(rmse)
             # get real observation and add to history for predicting the next week
-            history.x = np.vstack((history.x, data_test.x[i:i + 1:, ]))
-            history.y = np.vstack((history.y, data_test.y[i:i + 1:, ]))
+            history.x = np.vstack((history.x, data_test.x[i : i + 1 :,]))
+            history.y = np.vstack((history.y, data_test.y[i : i + 1 :,]))
         # evaluate predictions days for each week
         # predictions = np.array(predictions)
         return predictions, rmses
 
-    def evaluate_model_n_times(self, model=None, train=None, test=None, n_repeat=None, verbose=0):
+    def evaluate_model_n_times(
+        self, model=None, train=None, test=None, n_repeat=None, verbose=0
+    ):
         """
         Fit and Evaluate a single model over train and test multiple times
         :param model: Specify model to training and evaluate
@@ -105,14 +107,16 @@ class Evaluator:
         rmse_list = list()
         for i in range(n_repeat):
             regressor_list.append(model)
-            regressor_list[i].fit_model(train.x, train.y, verbose)
+            regressor_list[i].fiting(train.x, train.y, verbose)
             y_hat, rmse = self.evaluate_model(model, train, test)
             y_hat_list.append(y_hat)
             rmse_list.append(rmse)
 
         return list(zip(regressor_list, y_hat_list, rmse_list))
 
-    def evaluate_n_models_n_times(self, list_models=None, train=None, test=None, n_repeat=1, verbose=0):
+    def evaluate_n_models_n_times(
+        self, list_models=None, train=None, test=None, n_repeat=1, verbose=0
+    ):
         """
         Fit and Evaluate multiple models over train and test multiple times
         :param list_models: Specify model list to training and evaluate
@@ -128,21 +132,27 @@ class Evaluator:
         regressors_list = list()
 
         for model in list_models:
-            regressors_list.append(self.evaluate_model_n_times(model, train, test, n_repeat, verbose))
+            regressors_list.append(
+                self.evaluate_model_n_times(model, train, test, n_repeat, verbose)
+            )
             self._model = model
 
         return regressors_list
 
     def __str__(self):
         if type(self._data_train) is Train and type(self._data_test) is Test:
-            return f'\nQuantity Models: {len(self._models)}' \
-                   f'\nLast Model added and settled: {self._model}' \
-                   f'\nData train: {self._data_train.x.shape}' \
-                   f'\nData test: {self._data_test.x.shape}' \
-                   f'\nRepetitions: {self.n_repeat}\n'
+            return (
+                f"\nQuantity Models: {len(self._models)}"
+                f"\nLast Model added and settled: {self._model}"
+                f"\nData train: {self._data_train.x.shape}"
+                f"\nData test: {self._data_test.x.shape}"
+                f"\nRepetitions: {self.n_repeat}\n"
+            )
 
-        return f'\nQuantity Models: {len(self._models)}' \
-               f'\nLast Model added and settled: {self._model}' \
-               f'\nData train: {self._data_train}' \
-               f'\nData test: {self._data_test}' \
-               f'\nRepetitions: {self.n_repeat}\n'
+        return (
+            f"\nQuantity Models: {len(self._models)}"
+            f"\nLast Model added and settled: {self._model}"
+            f"\nData train: {self._data_train}"
+            f"\nData test: {self._data_test}"
+            f"\nRepetitions: {self.n_repeat}\n"
+        )
