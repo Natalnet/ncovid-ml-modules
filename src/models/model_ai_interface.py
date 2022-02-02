@@ -38,6 +38,8 @@ class ModelArtificalInterface(ModelInterface):
             + str(self.n_features)
             + "_"
             + str(self.nodes)
+            + "_"
+            + str(int(self.dropout * 100))
             + ".h5"
         )
 
