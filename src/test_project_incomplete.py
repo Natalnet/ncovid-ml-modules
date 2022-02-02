@@ -30,4 +30,5 @@ print(test_2.x.shape, test_2.y.shape)
 
 # Loading model, and predicting
 lstm_model_2 = lstm_manner.ModelLSTM("Araraquara")
+lstm_model_2.loading()
 y_hat, rmse = lstm_model_2.predicting(test)
