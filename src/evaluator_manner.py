@@ -70,7 +70,7 @@ class Evaluator:
         rmses = list()
         for i in range(len(data_test.x)):
             # predict the week
-            yhat, rmse = model.make_predictions(history)
+            yhat, rmse = model.predicting(history)
             # store the predictions
             predictions.append(yhat)
             rmses.append(rmse)
