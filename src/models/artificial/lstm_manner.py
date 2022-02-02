@@ -7,20 +7,27 @@ from tensorflow.keras.models import Model
 
 
 class ModelLSTM(ModelArtificalInterface):
-    def __init__(self, locale, model=None):
+    def __init__(
+        self, locale, model=None, data_window_size=None, nodes=None, dropout=None
+    ):
         """[summary]
 
         Args:
             locale (str): Location name that is submitted the model (country, state, country)
         """
-        super().__init__(locale)
-        self.model_name = self._resolve_model_name()
 
-        if model is not None:
+        super().__init__(locale)
+
+        if model:
             self.model = model
-        elif os.path.isfile(self.model_name):
-            self.model = self.loading(self.model_name)
-        else:
+
+        if not model or (data_window_size or nodes or dropout):
+            if data_window_size:
+                self.data_window_size = data_window_size
+            if nodes:
+                self.nodes = nodes
+            if dropout:
+                self.dropout = dropout
             self.model = self.__model_architecture()
 
     def __model_architecture(self):
