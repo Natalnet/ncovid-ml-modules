@@ -1,82 +1,44 @@
-import json
+import data_manner
+import datetime
 import pandas as pd
+import configs_manner
+exec(f'from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner')
 
-import data_manner, model_manner
+class PredictorConstructor():
+    def __init__(self, path, repo=None, feature=None, begin=None, end=None):
+        self.path = path
+        self.repo = repo
+        self.feature = feature
+        self.begin = begin 
+        self.end = end
+        self.input_data = self.data_collector()
+        self.model = self.model_assemble()
 
+    def model_assemble(self):
+        model = 'Model' + str(configs_manner.model_subtype.upper())
+        model_obj = getattr(model_manner, model)(self.path)
+        model_obj.loading()
+        return model_obj
 
-def predict_webrequest(responsed_data):
-    data_copy = responsed_data.copy()
-    data_copy.deaths = responsed_data.deaths.diff(7).dropna()
-    data_copy.newCases = responsed_data.newCases.diff(7).dropna()
-    data_copy = data_copy.dropna()
+    def data_collector(self):
+        self.data_obj = data_manner.DataConstructor()
+        self.data_obj.is_predicting = True
+        self.data_collected = self.data_obj.collect_to_predict(self.path, self.repo, self.feature, self.begin, self.end)
+    
+        return self.data_obj.build_test(self.data_collected)
 
-    data = [data_copy.deaths.values, data_copy.newCases.values]
+    def predict(self):
+        predicted, self.rmse = self.model.predicting(self.input_data)
+        self.predicted = predicted.reshape(-1) 
+        return self.convert_to_string_format()
 
-    week_size = 7
-    # this method just split the data by the week_size
-    data_to_predict = data_manner.build_data_prediction(data[1], week_size)
+    def convert_to_string_format(self):
+        time_interval = pd.date_range(self.begin, self.end)
 
-    # Train data
-    train, _ = data_manner.build_data(data, step_size=week_size, size_data_test=7)
+        returned_dictionaty = []
+        for date, value in zip(time_interval, self.predicted):
+            str_value = str(value)
+            str_date = datetime.datetime.strftime(date, "%Y-%m-%d")
+            returned_dictionaty.append({"date": str_date, "deaths": str_value})
 
-    # passing the data in load_model just for an example, this method do not have argouments and
-    # returns a model already trained
-    model_loaded = load_model(train)
-
-    prediction = model_loaded.model.predict(data_to_predict, verbose=0)
-
-    return prediction.reshape(-1)
-
-
-def load_model(train):
-    # Here I will train a model just for example
-    # model_config: [n_input, n_lstm_nodes, dropout, n_features]
-    week_size = 7
-    preseted_model_config = [week_size, 200, 0.0, train.x.shape[2]]
-
-    regressor = model_manner.build_model(preseted_model_config)
-
-    regressor.fit_model(train, epochs=20, batch_size=16, verbose=0)
-
-    return regressor
-
-
-def convert_output_to_json(output_of_prediction, rqt_data):
-    returned_dictionaty = []
-    for date, value in zip(
-        rqt_data.index[-len(output_of_prediction) :], output_of_prediction
-    ):
-        returned_dictionaty.append({"date": date, "deaths": str(value)})
-
-    returned_json = json.dumps(
-        str(returned_dictionaty), indent=3, separators=(",", ":")
-    )
-    return returned_json
-
-
-def predict(repo, path, feature, begin, end):
-    requested_data = pd.read_csv(
-        f"http://ncovid.natalnet.br/datamanager/repo/{repo}/path/{path}/feature/{feature}/begin/{begin}/end/{end}/as-csv",
-        index_col="date",
-    )
-
-    predicted_values = predict_for_rquest(requested_data)
-
-    predictied_json = convert_output_to_json(predicted_values, requested_data)
-
-    print(predictied_json)
-
-    return predictied_json
-
-
-# como deve ser o retorno JSON
-# [
-#     {
-#         "date": "2020-03-13",
-#         "deaths": "0"
-#     },
-#     {
-#         "date": "2020-03-14",
-#         "deaths": "3"
-#     }
-# ]
+        return str(returned_dictionaty)

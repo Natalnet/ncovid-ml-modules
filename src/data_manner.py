@@ -1,5 +1,5 @@
 import numpy as np
-
+import datetime
 import configs_manner
 from enums import model_enum
 
@@ -77,7 +77,7 @@ class DataConstructor:
             [Array of Arrays]: returns the dataframme in array format (not as pandas dataframe)
         """
         import pandas as pd
-
+        
         if repo and feature and begin and end is not None:
             dataframe = pd.read_csv(
                 f"http://ncovid.natalnet.br/datamanager/repo/{repo}/path/{path}/feature/{feature}/begin/{begin}/end/{end}/as-csv",
@@ -111,6 +111,22 @@ class DataConstructor:
 
         return [dataframe[col].values for col in dataframe.columns]
 
+    def collect_to_predict(self, path, repo=None, feature=None, begin=None, end=None):
+        end = self.time_skip_for_predict(begin, end)
+        begin = self.time_delay(begin)
+        return self.collect_dataframe(path, repo, feature, begin, end)
+
+    def time_skip_for_predict(self, begin, end):
+        start_date = datetime.datetime.strptime(begin, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+        days_num = (end_date-start_date+datetime.timedelta(days=1)).days
+        days_offset = days_num + (self.window_size - days_num % self.window_size)
+        end_date = end_date + datetime.timedelta(days=days_offset-days_num+self.window_size)
+        return end_date.strftime("%Y-%m-%d")
+
+    def time_delay(self, begin):
+        start_date = datetime.datetime.strptime(begin, "%Y-%m-%d") - datetime.timedelta(days=self.window_size)
+        return start_date.strftime("%Y-%m-%d")
 
 class Data:
     def __init__(self, step_size, type_norm=None):
@@ -181,11 +197,11 @@ class Train(Data):
 class Test(Data):
     def __init__(self, data, step_size, type_norm=None):
         super().__init__(step_size, type_norm)
-
         if configs_manner.model_infos["model_is_output_in_input"]:
             self.x = data[:-1, :, :]
         else:
             self.x = data[:-1, :, 1:]
 
+        configs_manner.model_infos["data_n_features"] = self.x.shape[-1]
         self.y = data[1:, :, :1]
         self.y = self.y.reshape((self.y.shape[0], self.y.shape[1], 1))
