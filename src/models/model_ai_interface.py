@@ -16,7 +16,7 @@ class ModelArtificalInterface(ModelInterface):
         self.dropout = configs_manner.model_infos["model_dropout"]
         self.batch_size = configs_manner.model_infos["model_batch_size"]
         self.is_output_in_input = configs_manner.model_infos["model_is_output_in_input"]
-        self.is_predicting = configs_manner.model_infos["model_is_predicting"]
+        self.is_predicting = configs_manner.model_is_predicting
         self.data_window_size = configs_manner.model_infos["data_window_size"]
         self.earlystop = EarlyStopping(
             monitor="loss",

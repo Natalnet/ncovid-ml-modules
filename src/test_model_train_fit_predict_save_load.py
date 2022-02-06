@@ -15,7 +15,7 @@ print(train.x.shape, train.y.shape)
 print(test.x.shape, test.y.shape)
 
 # Creating model, training, and predicting
-lstm_model = lstm_manner.ModelLSTM("Araraquara")
+lstm_model = lstm_manner.ModelLSTM(path)
 if lstm_model.fiting(train.x, train.y, verbose=0):
     y_hat, rmse = lstm_model.predicting(test)
     print(sum(rmse))
@@ -29,6 +29,6 @@ test_2 = construtor_dados_2.build_test(data_araraquara)
 print(test_2.x.shape, test_2.y.shape)
 
 # Loading model, and predicting
-lstm_model_2 = lstm_manner.ModelLSTM("Araraquara")
+lstm_model_2 = lstm_manner.ModelLSTM(path)
 lstm_model_2.loading()
 y_hat, rmse = lstm_model_2.predicting(test)

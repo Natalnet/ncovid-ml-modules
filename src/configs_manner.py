@@ -36,9 +36,6 @@ def collect_artificial():
     infos["model_is_output_in_input"] = eval(
         data["model_configs"]["Artificial"]["is_output_in_input"]
     )
-    infos["model_is_predicting"] = eval(
-        data["model_configs"]["Artificial"]["is_predicting"]
-    )
     infos["data_is_accumulated_values"] = eval(
         data["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
     )
@@ -68,6 +65,7 @@ with open("../doc/configure.json") as json_file:
 
     model_type = data["model_configs"]["type_used"]
     model_subtype = data["model_configs"][model_type]["model"]
+    model_is_predicting = eval(data["model_configs"]["is_predicting"])
 
     if model_type == model_enum.Model.ARTIFICIAL.value:
         model_infos = collect_artificial()

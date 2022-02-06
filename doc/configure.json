@@ -10,6 +10,7 @@
   },
   "model_configs": {
     "type_used": "Artificial",
+    "is_predicting": "False",
     "Autoregressive": {
       "model": "arima",
       "p": 1,
@@ -32,7 +33,6 @@
       "batch_size": 32,
       "earlystop": 50,
       "is_output_in_input": "False",
-      "is_predicting": "False",
       "data_configs": {
         "is_accumulated_values": "False",
         "window_size": 7,
