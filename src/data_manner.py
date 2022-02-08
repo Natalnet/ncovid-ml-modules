@@ -1,5 +1,6 @@
 import numpy as np
 
+import logger
 import configs_manner
 
 
@@ -11,11 +12,15 @@ class DataConstructor:
         Args:
             is_predicting (bool, optional): Flag that descripts if data is for testing. Defaults extracted from configure.json.
         """
-        self.is_predicting = configs_manner.model_is_predicting
-        if is_predicting:
-            self.is_predicting = is_predicting
 
-        eval("self._constructor_" + configs_manner.model_type + "()")
+        self.is_predicting = (
+            is_predicting if is_predicting else configs_manner.model_is_predicting
+        )
+        eval(f"self._constructor_{configs_manner.model_type}()")
+
+        logger.debug_log(
+            self.__class__.__name__, self.__init__.__name__, "Data Constructor Created"
+        )
 
     def _constructor_Autoregressive(self):
         self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
@@ -40,12 +45,12 @@ class DataConstructor:
         Returns:
             Train, Test: Train and Test data types
         """
-        assert data is not None, "Empty data"
-        data = self.__transpose_data(data)
-        data_train, data_test = self.split_data_train_test(data)
-        train = self.build_train(data_train)
-        test = self.build_test(data_test)
-        return train, test
+        assert type(data) == list, logger.error_log(
+            self.__class__.__name__, self.build_test.__name__, "Format data"
+        )
+        data_t = self.__transpose_data(data)
+        data_train, data_test = self.split_data_train_test(data_t)
+        return self.build_train(data_train), self.build_test(data_test)
 
     def build_train(self, data):
         """To build train data for training.
@@ -58,8 +63,10 @@ class DataConstructor:
         Returns:
             Test: Test data type 
         """
-        assert type(data) is not np.array, "Format data is not np.array"
-        return eval("self._build_data_" + configs_manner.model_type + "(Train, data)")
+        assert type(data) == np.ndarray or type(data) == list, logger.error_log(
+            self.__class__.__name__, self.build_train.__name__, "Format data",
+        )
+        return eval(f"self._build_data_{configs_manner.model_type}(Train, data)")
 
     def build_test(self, data):
         """To build test data for predicting.
@@ -72,14 +79,18 @@ class DataConstructor:
         Returns:
             Train: Train data type 
         """
-        assert type(data) is not np.array, "Format data is not np.array"
-        return eval("self._build_data_" + configs_manner.model_type + "(Test, data)")
+        assert type(data) == np.ndarray or type(data) == list, logger.error_log(
+            self.__class__.__name__, self.build_test.__name__, "Format data",
+        )
+        return eval(f"self._build_data_{configs_manner.model_type}(Test, data)")
 
     def _build_data_Autoregressive(self, data_type, data):
-        return data_type(data, self.window_size, self.type_norm)
+        # TO DO
+        pass
 
     def _build_data_Epidemiological(self, data_type, data):
-        return data_type(data, self.window_size, self.type_norm)
+        # TO DO
+        pass
 
     def _build_data_Artificial(self, data_type, data):
         def __windowing_data(data):
@@ -120,11 +131,11 @@ class DataConstructor:
         """Collect a dataframe from the repository or web
         
         Args:
-            path (str): [description]
-            repo (str, optional): [description]. Defaults to None.
-            feature (str, optional): [description]. Defaults to None.
-            begin (str, optional): [description]. Defaults to None.
-            end (str, optional): [description]. Defaults to None.
+            path (str): a raw web link or db locale to be predicted (eg. `brl:rn`)
+            repo (str, optional): DB repository that contains the dataframe. Defaults to None.
+            feature (str, optional): Features separated by `:`, presented in the dataframe(eg. `date:deaths:newCases:`). Defaults to None.
+            begin (str, optional): First day of the temporal time series `YYYY-MM-DD`. Defaults to None.
+            end (str, optional): Last day of the temporal time series `YYYY-MM-DD`. Defaults to None.
 
         Returns:
             dataframe: Pandas dataframe
@@ -137,13 +148,15 @@ class DataConstructor:
 
             dataframe = pd.read_csv(
                 (
-                    "http://ncovid.natalnet.br/datamanager/"
-                    + "repo/{}/"
-                    + "path/{}/"
-                    + "feature/{}/"
-                    + "begin/{}/"
-                    + "end/{}/as-csv"
-                ).format(repo, path, feature, begin, end),
+                    "".join(
+                        f"http://ncovid.natalnet.br/datamanager/"
+                        f"repo/{repo}/"
+                        f"path/{path}/"
+                        f"feature/{feature}/"
+                        f"begin/{begin}/"
+                        f"end/{end}/as-csv"
+                    )
+                ),
                 parse_dates=["date"],
                 index_col="date",
             )
@@ -171,15 +184,40 @@ class DataConstructor:
             days=offset_days - period_to_add + self.window_size
         )
 
-        return new_first_day.strftime(DATE_FORMAT), new_last_day.strftime(DATE_FORMAT)
+        return (
+            new_first_day.strftime(DATE_FORMAT),
+            new_last_day.strftime(DATE_FORMAT),
+        )
 
     class Preprocessing:
         def __init__(self):
+            """
+            Preprocess that sould be applied the data for training and predicting steps
+            """
             # TO DO
             pass
 
         def pipeline(self, dataframe):
-            assert dataframe is not None, "Empty data"
+            """Auto and basic pipeline applied to the data
+            1- Resolve cumulativa columns
+            2- Remove columns with any nan values
+            3- Remove columns with unique values
+            4- Convert dataframe to list
+
+            Args:
+                dataframe (pandas): Temporal time series
+
+            Returns:
+                list: Preprocessed dataframe as list
+            """
+            logger.debug_log(
+                self.__class__.__name__,
+                self.pipeline.__name__,
+                "Preprocessing pipeline started",
+            )
+            assert dataframe is not None, logger.debug_log(
+                self.__class__.__name__, self.pipeline.__name__, "Empty data"
+            )
 
             dataframe_not_cumulative = self.remove_na_values(
                 self.solve_cumulative(dataframe)
@@ -189,6 +227,12 @@ class DataConstructor:
             )
             dataframe_as_list = self.convert_dataframe_to_list(
                 dataframe_columns_elegible
+            )
+
+            logger.debug_log(
+                self.__class__.__name__,
+                self.pipeline.__name__,
+                "Preprocessing pipeline finished",
             )
             return dataframe_as_list
 
@@ -213,11 +257,11 @@ class DataConstructor:
             ]
             return dataframe.loc[:, column_with_values]
 
-        def convert_dataframe_to_list(self, dataframe):
-            return [dataframe[col].values for col in dataframe.columns]
-
         def remove_na_values(self, dataframe):
             return dataframe.dropna()
+
+        def convert_dataframe_to_list(self, dataframe):
+            return [dataframe[col].values for col in dataframe.columns]
 
 
 class Data:
@@ -229,21 +273,19 @@ class Data:
         self.type_norm = type_norm
         self.step_size = step_size
 
+        logger.debug_log(
+            self.__class__.__name__,
+            self.__init__.__name__,
+            f"Data -> type_norm: {type_norm} - step_size: {step_size}",
+        )
+
     @property
     def y_hat(self):
         return self._y_hat
 
     @y_hat.setter
     def y_hat(self, y_hat_list):
-        from sklearn.metrics import mean_squared_error
-        from math import sqrt
-
         self._y_hat = y_hat_list
-        self._rmse = list()
-        for i in range(len(self.y_hat)):
-            mse_i = mean_squared_error(self.y[i], self.y_hat[i])
-            rmse_i = sqrt(mse_i)
-            self._rmse.append(rmse_i)
 
     @property
     def rmse(self):
@@ -256,9 +298,18 @@ class Data:
 
 class Train(Data):
     def __init__(self, data, step_size=None, type_norm=None):
+        """Data Train Object. Use the attribute `model_type` in `docs/configure.json` to determine the type of data should be expected.
+
+        Args:
+            data (np.array): Temporal serie used as train data
+            step_size (int, optional): Indicates the size of each data sample. Defaults to None.
+            type_norm (str, optional): Describes the normalization method applied to the data. Defaults to None.
+        """
         super().__init__(step_size, type_norm)
-        self.x, self.y = eval(
-            "self._builder_train_" + configs_manner.model_type + "(data)"
+        self.x, self.y = eval(f"self._builder_train_{configs_manner.model_type}(data)")
+
+        logger.debug_log(
+            self.__class__.__name__, self.__init__.__name__, "Data Train Created"
         )
 
     def _builder_train_Autoregressive(self, data):
@@ -276,7 +327,7 @@ class Train(Data):
             x, y = list(), list()
             in_start = 0
             # step over the entire history one time step at a time
-            for _ in range(len(data)):
+            for _ in enumerate(data):
                 # define the end of the input sequence
                 in_end = in_start + self.step_size
                 out_end = in_end + self.step_size
@@ -290,10 +341,7 @@ class Train(Data):
 
         x, y = __walk_forward(data)
 
-        if configs_manner.model_infos["model_is_output_in_input"]:
-            x = x
-        else:
-            x = x[:, :, 1:]
+        x = x if configs_manner.model_infos["model_is_output_in_input"] else x[:, :, 1:]
 
         configs_manner.model_infos["data_n_features"] = x.shape[-1]
         y = y.reshape((y.shape[0], y.shape[1], 1))
@@ -303,9 +351,18 @@ class Train(Data):
 
 class Test(Data):
     def __init__(self, data, step_size=None, type_norm=None):
+        """Data Test Object. Use the attribute `model_type` in `docs/configure.json` to determine the type of data should be expected
+
+        Args:
+            data (np.array): Temporal serie used as test data
+            step_size (int, optional): Indicates the size of each data sample. Defaults to None.
+            type_norm (str, optional): Describes the normalization method applied to the data. Defaults to None.
+        """
         super().__init__(step_size, type_norm)
-        self.x, self.y = eval(
-            "self._builder_test_" + configs_manner.model_type + "(data)"
+        self.x, self.y = eval(f"self._builder_test_{configs_manner.model_type}(data)")
+
+        logger.debug_log(
+            self.__class__.__name__, self.__init__.__name__, "Data Test Created"
         )
 
     def _builder_test_Autoregressive(self, data):
@@ -317,10 +374,12 @@ class Test(Data):
         pass
 
     def _builder_test_Artificial(self, data):
-        if configs_manner.model_infos["model_is_output_in_input"]:
-            x = data[:-1, :, :]
-        else:
-            x = data[:-1, :, 1:]
+
+        x = (
+            data[:-1, :, :]
+            if configs_manner.model_infos["model_is_output_in_input"]
+            else data[:-1, :, 1:]
+        )
 
         y = data[1:, :, :1]
         y = y.reshape((y.shape[0], y.shape[1], 1))

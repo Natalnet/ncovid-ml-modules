@@ -68,15 +68,15 @@ class Evaluator:
         history = data_train
         predictions = list()
         rmses = list()
-        for i in range(len(data_test.x)):
+        for idx, num in enumerate(data_test.x):
             # predict the week
             yhat, rmse = model.predicting(history)
             # store the predictions
             predictions.append(yhat)
             rmses.append(rmse)
             # get real observation and add to history for predicting the next week
-            history.x = np.vstack((history.x, data_test.x[i : i + 1 :,]))
-            history.y = np.vstack((history.y, data_test.y[i : i + 1 :,]))
+            history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
+            history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
         # evaluate predictions days for each week
         # predictions = np.array(predictions)
         return predictions, rmses
@@ -105,9 +105,9 @@ class Evaluator:
         regressor_list = list()
         y_hat_list = list()
         rmse_list = list()
-        for i in range(n_repeat):
+        for idx, num in enumerate(n_repeat):
             regressor_list.append(model)
-            regressor_list[i].fiting(train.x, train.y, verbose)
+            regressor_list[idx].fiting(train.x, train.y, verbose)
             y_hat, rmse = self.evaluate_model(model, train, test)
             y_hat_list.append(y_hat)
             rmse_list.append(rmse)

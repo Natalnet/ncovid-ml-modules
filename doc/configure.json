@@ -6,6 +6,7 @@
     "docs_path": "../doc/",
     "data_path": "../dbs/",
     "model_path": "fitted_model/",
+    "model_path_remote": "https://",
     "glossary_file": "glossary.json"
   },
   "model_configs": {
@@ -28,11 +29,11 @@
     "Artificial": {
       "model": "lstm",
       "nodes": 200,
-      "epochs": 50,
-      "dropout": 0.0,
-      "batch_size": 32,
+      "epochs": 100,
+      "dropout": 0.3,
+      "batch_size": 64,
       "earlystop": 50,
-      "is_output_in_input": "False",
+      "is_output_in_input": "True",
       "data_configs": {
         "is_accumulated_values": "False",
         "window_size": 7,

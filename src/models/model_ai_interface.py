@@ -1,3 +1,4 @@
+import logger
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
@@ -26,9 +27,9 @@ class ModelArtificalInterface(ModelInterface):
         )
         self.n_features = configs_manner.model_infos["data_n_features"]
 
-    def _resolve_model_name(self):
+    def _resolve_model_name(self, is_remote=False):
         return (
-            self.model_path
+            str(self.model_path_remote if is_remote else self.model_path)
             + self.locale
             + "_"
             + self.model_subtype
@@ -47,20 +48,39 @@ class ModelArtificalInterface(ModelInterface):
         self.model.save(self._resolve_model_name())
 
     def loading(self, model_name=None):
-        if model_name:
-            return tf.keras.models.load_model(model_name)
-        return tf.keras.models.load_model(self._resolve_model_name())
+        try:
+            if model_name:
+                return tf.keras.models.load_model(model_name)
+            return tf.keras.models.load_model(self._resolve_model_name())
+        except OSError:
+            logger.debug_log(
+                self.__class__.__name__, self.loading.__name__, "Model local failed"
+            )
+            # TO DO
+            # load from web
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__,
+                self.loading.__name__,
+                "Load model - {}".format(e.__traceback__.__str__),
+            )
 
     def fiting(self, x, y, verbose=0):
-        self.model.fit(
-            x=x,
-            y=y,
-            epochs=self.epochs,
-            batch_size=self.batch_size,
-            callbacks=[self.earlystop],
-            verbose=verbose,
-        )
-        return True
+        try:
+            self.model.fit(
+                x=x,
+                y=y,
+                epochs=self.epochs,
+                batch_size=self.batch_size,
+                callbacks=[self.earlystop],
+                verbose=verbose,
+            )
+            logger.debug_log(
+                self.__class__.__name__, self.fiting.__name__, "Model fitted"
+            )
+            return True
+        except:
+            logger.error_log(self.__class__.__name__, self.fiting.__name__, "Fit model")
 
     def predicting(self, data):
         """
@@ -69,10 +89,9 @@ class ModelArtificalInterface(ModelInterface):
         :return: prediction and prediction's rmse
         """
         yhat = self.model.predict(data.x, verbose=0)
-
         rmse_scores = list()
-        for i in range(len(yhat)):
-            mse = mean_squared_error(data.y[i], yhat[i])
+        for idx, _ in enumerate(yhat):
+            mse = mean_squared_error(data.y[idx], yhat[idx])
             rmse = sqrt(mse)
             rmse_scores.append(rmse)
 
