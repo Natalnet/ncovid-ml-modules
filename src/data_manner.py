@@ -213,10 +213,10 @@ class DataConstructor:
             logger.debug_log(
                 self.__class__.__name__,
                 self.pipeline.__name__,
-                "Preprocessing pipeline started",
+                "Preprocessing pipeline",
             )
-            assert dataframe is not None, logger.debug_log(
-                self.__class__.__name__, self.pipeline.__name__, "Empty data"
+            assert dataframe is not None, logger.error_log(
+                self.__class__.__name__, self.pipeline.__name__, "Data is empty"
             )
 
             dataframe_not_cumulative = self.remove_na_values(
@@ -230,9 +230,7 @@ class DataConstructor:
             )
 
             logger.debug_log(
-                self.__class__.__name__,
-                self.pipeline.__name__,
-                "Preprocessing pipeline finished",
+                self.__class__.__name__, self.pipeline.__name__, "Pipeline finished",
             )
             return dataframe_as_list
 
@@ -305,12 +303,18 @@ class Train(Data):
             step_size (int, optional): Indicates the size of each data sample. Defaults to None.
             type_norm (str, optional): Describes the normalization method applied to the data. Defaults to None.
         """
-        super().__init__(step_size, type_norm)
-        self.x, self.y = eval(f"self._builder_train_{configs_manner.model_type}(data)")
-
-        logger.debug_log(
-            self.__class__.__name__, self.__init__.__name__, "Data Train Created"
-        )
+        try:
+            super().__init__(step_size, type_norm)
+            self.x, self.y = eval(
+                f"self._builder_train_{configs_manner.model_type}(data)"
+            )
+            logger.debug_log(
+                self.__class__.__name__, self.__init__.__name__, "Data Train Created"
+            )
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.__init__.__name__, e.__traceback__.__str__
+            )
 
     def _builder_train_Autoregressive(self, data):
         # TO DO
@@ -358,12 +362,18 @@ class Test(Data):
             step_size (int, optional): Indicates the size of each data sample. Defaults to None.
             type_norm (str, optional): Describes the normalization method applied to the data. Defaults to None.
         """
-        super().__init__(step_size, type_norm)
-        self.x, self.y = eval(f"self._builder_test_{configs_manner.model_type}(data)")
-
-        logger.debug_log(
-            self.__class__.__name__, self.__init__.__name__, "Data Test Created"
-        )
+        try:
+            super().__init__(step_size, type_norm)
+            self.x, self.y = eval(
+                f"self._builder_test_{configs_manner.model_type}(data)"
+            )
+            logger.debug_log(
+                self.__class__.__name__, self.__init__.__name__, "Data Test Created"
+            )
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.__init__.__name__, e.__traceback__.__str__
+            )
 
     def _builder_test_Autoregressive(self, data):
         # TO DO

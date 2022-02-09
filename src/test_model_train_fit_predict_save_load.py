@@ -20,7 +20,7 @@ print(train.x.shape, train.y.shape)
 print(test.x.shape, test.y.shape)
 
 # --------- MODEL: CREATE - TRAIN - SAVE
-lstm_model = lstm_manner.ModelLSTM("tets")
+lstm_model = lstm_manner.ModelLSTM("brl:rn")
 lstm_model.loading()
 if lstm_model.fiting(train.x, train.y, verbose=0):
     test.y_hat, test.rmse = lstm_model.predicting(test)

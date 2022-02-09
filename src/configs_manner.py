@@ -76,6 +76,7 @@ with open("../doc/configure.json") as json_file:
         logger.debug_log(
             "configs_manner.py", "loading configurations", "Configurations loaded"
         )
+
     except Exception as e:
         logger.error_log(
             "configs_manner.py", "loading configurations", e.__traceback__.__str__
