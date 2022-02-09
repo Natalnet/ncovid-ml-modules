@@ -85,8 +85,7 @@ class DataConstructor:
                 index_col="date",
             )
         else:
-            dataframe = pd.read_csv(path, parse_dates=["date"], index_col="date",)
-
+            dataframe = pd.read_csv(path, parse_dates=["date"], index_col="date")
         return self.__clean_dataframe(dataframe)
 
     def __clean_dataframe(self, dataframe):
@@ -97,9 +96,11 @@ class DataConstructor:
                     .diff(configs_manner.model_infos["data_window_size"])
                     .dropna()
                 )
+        else:
+            dataframe = dataframe.rolling(configs_manner.model_infos["data_window_size"]).mean()
 
         dataframe = dataframe.dropna()
-
+        
         def is_different_values(s):
             a = s.to_numpy()  # s.values (pandas<0.24)
             return (a[0] == a).all()

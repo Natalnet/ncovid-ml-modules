@@ -52,9 +52,9 @@ class ModelArtificalInterface(ModelInterface):
     def loading(self, model_name=None):
         try:
             if model_name:
-                return tf.keras.models.load_model(model_name)
+                self.model = tf.keras.models.load_model(model_name)
             else:
-                return tf.keras.models.load_model(self._resolve_model_name())
+                self.model = tf.keras.models.load_model(self._resolve_model_name())
         except:
             print("The requested model is being download...")
             url_download = self._resolve_model_name(True)
@@ -63,7 +63,7 @@ class ModelArtificalInterface(ModelInterface):
             requested_model_binary_obj = io.BytesIO(requested_model_file)
             requested_model = h5py.File(requested_model_binary_obj,'r')
             
-            return tf.keras.models.load_model(requested_model)
+            self.model = tf.keras.models.load_model(requested_model)
 
     def fiting(self, x, y, verbose=0):
         self.model.fit(
