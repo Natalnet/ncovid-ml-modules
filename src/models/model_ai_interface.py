@@ -49,21 +49,25 @@ class ModelArtificalInterface(ModelInterface):
 
     def loading(self, model_name=None):
         try:
-            if model_name:
-                return tf.keras.models.load_model(model_name)
-            return tf.keras.models.load_model(self._resolve_model_name())
+            model = (
+                tf.keras.models.load_model(model_name)
+                if model_name
+                else tf.keras.models.load_model(self._resolve_model_name())
+            )
         except OSError:
+            try:
+                model = tf.keras.models.load_model(self._resolve_model_name(True))
+            except OSError as ose:
+                logger.error_log(
+                    self.__class__.__name__,
+                    self.loading.__name__,
+                    "Model not found - {}".format(ose.__str__),
+                )
+        else:
             logger.debug_log(
-                self.__class__.__name__, self.loading.__name__, "Model local failed"
+                self.__class__.__name__, self.loading.__name__, "Model loaded"
             )
-            # TO DO
-            # load from web
-        except Exception as e:
-            logger.error_log(
-                self.__class__.__name__,
-                self.loading.__name__,
-                "Load model - {}".format(e.__traceback__.__str__),
-            )
+            return model
 
     def fiting(self, x, y, verbose=0):
         try:
