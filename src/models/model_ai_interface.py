@@ -1,5 +1,8 @@
 from math import sqrt
 from sklearn.metrics import mean_squared_error
+import io
+import requests
+import h5py
 
 import configs_manner
 from models.model_interface import ModelInterface
@@ -26,9 +29,9 @@ class ModelArtificalInterface(ModelInterface):
         )
         self.n_features = configs_manner.model_infos["data_n_features"]
 
-    def _resolve_model_name(self):
+    def _resolve_model_name(self, is_remote=False):
         return (
-            self.model_path
+            str(self.model_path_remote if is_remote else self.model_path)
             + self.locale
             + "_"
             + self.model_subtype
@@ -47,9 +50,20 @@ class ModelArtificalInterface(ModelInterface):
         self.model.save(self._resolve_model_name())
 
     def loading(self, model_name=None):
-        if model_name:
-            return tf.keras.models.load_model(model_name)
-        return tf.keras.models.load_model(self._resolve_model_name())
+        try:
+            if model_name:
+                return tf.keras.models.load_model(model_name)
+            else:
+                return tf.keras.models.load_model(self._resolve_model_name())
+        except:
+            print("The requested model is being download...")
+            url_download = self._resolve_model_name(True)
+
+            requested_model_file = requests.get(url_download).content
+            requested_model_binary_obj = io.BytesIO(requested_model_file)
+            requested_model = h5py.File(requested_model_binary_obj,'r')
+            
+            return tf.keras.models.load_model(requested_model)
 
     def fiting(self, x, y, verbose=0):
         self.model.fit(

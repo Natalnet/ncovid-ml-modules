@@ -3,7 +3,7 @@ dbs/fitted_model/
 src/__pycache__/
 src/models/__pycache__/
 src/models/model_test_to_load/
-
+tests
 # keras file
 *.h5
 

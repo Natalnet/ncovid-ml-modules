@@ -62,6 +62,8 @@ with open("../doc/configure.json") as json_file:
     model_path = (
         data["folder_configs"]["data_path"] + data["folder_configs"]["model_path"]
     )
+    model_path_remote = data["folder_configs"]["model_path_remote"]
+
     glossary_file = (
         data["folder_configs"]["docs_path"] + data["folder_configs"]["glossary_file"]
     )
