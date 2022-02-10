@@ -84,7 +84,7 @@ class Evaluator:
             history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
         # evaluate predictions days for each week
         # predictions = np.array(predictions)
-        y = y[-1].reshape(y[-1].shape[0], ys[-1].shape[1])[:, :1]
+        y = y[-1].reshape(y[-1].shape[0], y[-1].shape[1])[:, :1]
         history.y_hat = history.y_hat[-1].reshape(
             history.y_hat[-1].shape[0], history.y_hat[-1].shape[1]
         )[:, :1]
