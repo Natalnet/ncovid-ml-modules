@@ -1,43 +1,38 @@
 import data_manner
-
-db_folder = '../dbs/'
-last_date = '2021-03-21'
-df_araraquara = data_manner.DataConstructor.read_csv_file(db_folder + 'df_araraquara.csv', 'date', last_date, None)
+from models.artificial import lstm_manner
 
 # --------- MANIPULATING DATA
-df_araraquara.confirmed = df_araraquara.confirmed.diff(7).dropna()
-df_araraquara.deaths = df_araraquara.deaths.diff(7).dropna()
-df_araraquara = df_araraquara.dropna()
-data = [df_araraquara.deaths.values, df_araraquara.confirmed.values]
+repo = "p971074907"
+path = "brl:rn"
+feature = "date:deaths:newCases:"
+begin = "2020-05-01"
+end = "2021-07-01"
 
-# FORMA 1
-step_size = 7
-test_size = step_size * 3
-construtor_dados_1 = data_manner.DataConstructor(is_training=True)
-train, test = construtor_dados_1.build_train_test(data)
-print(train.x[-1], train.x.shape, train.y.shape)
-
-# FORMA 2
-# train = construtor_dados.build_train(data)
-# test = construtor_dados.build_test(data)
+construtor_dados = data_manner.DataConstructor()
+data_araraquara = construtor_dados.collect_dataframe(path, repo, feature, begin, end)
+train, test = construtor_dados.build_train_test(data_araraquara)
+print(train.x.shape, train.y.shape)
+print(test.x.shape, test.y.shape)
 
 # ----------------------- CRIANDO UM MODELO, TREINANDO E FAZENDO PREVISOES COM DADOS DE TESTE
-import models.lstm_manner as model_manner
+import models.artificial.lstm_manner
 
 print("TREINANDO UM MODELO E PREDICOES- 1\n")
-modelo = model_manner.ModelLSTM(n_inputs=step_size, n_features=train.x.shape[2], n_nodes=200, dropout=0.0)
+modelo = lstm_manner.ModelLSTM("Araraquara")
 print(modelo)
-if modelo.fit_model(train.x, train.y):
-    y_hat, rmse = modelo.make_predictions(test)
+if modelo.fiting(train.x, train.y):
+    y_hat, rmse = modelo.predicting(test)
     print(sum(rmse))
-modelo.save_model(locale='Araraquara')
+modelo.saving()
 
 # ----------------------- AVALIANDO UM UNICO MODELO
 import evaluator_manner
 
 print("criando um avaliador de UM MODELO (TREINO + TESTES) - 1\n")
 # FORMA 1
-avaliador_de_um_modelo_1 = evaluator_manner.Evaluator(model=modelo, data_train=train, data_test=test)
+avaliador_de_um_modelo_1 = evaluator_manner.Evaluator(
+    model=modelo, data_train=train, data_test=test
+)
 print(avaliador_de_um_modelo_1)
 
 print("criando um avaliador de  UM MODELO (TREINO + TESTES) - 2\n")
@@ -62,7 +57,9 @@ print("Avaliando UM MODELO n vezes ( 2 repeticoes (OU 1, padrao)- 1\n")
 modelo_avaliado_n_vezes_1 = avaliador_de_um_modelo_1.evaluate_model_n_times(n_repeat=2)
 print(len(modelo_avaliado_n_vezes_1))
 
-print("CRIANDO avaliador de UM MODELO n vezes (setando quantidade de repeticoes = 1) - 2\n")
+print(
+    "CRIANDO avaliador de UM MODELO n vezes (setando quantidade de repeticoes = 1) - 2\n"
+)
 # FORMA 2
 avaliador_de_um_modelo_2.n_repeat = 3
 modelo_avaliado_n_vezes_2 = avaliador_de_um_modelo_2.evaluate_model_n_times()
@@ -70,19 +67,23 @@ print(len(modelo_avaliado_n_vezes_2))
 
 # ----------------------- AVALIANDO MUITOS MODELOS
 print("CRIANDO avaliador de MUITOS MODELOS n vezes\n")
-modelo_1 = model_manner.ModelLSTM(n_inputs=step_size, n_features=train.x.shape[2], n_nodes=200, dropout=0.0)
+modelo_1 = lstm_manner.ModelLSTM("Araraquara", nodes=200, dropout=0.0)
 print(modelo_1)
-modelo_2 = model_manner.ModelLSTM(n_inputs=step_size, n_features=train.x.shape[2], n_nodes=100, dropout=0.0)
+modelo_2 = lstm_manner.ModelLSTM("Araraquara", nodes=100, dropout=0.0)
 print(modelo_2)
-modelo_3 = model_manner.ModelLSTM(n_inputs=step_size, n_features=train.x.shape[2], n_nodes=50, dropout=0.3)
+modelo_3 = lstm_manner.ModelLSTM("Araraquara", nodes=50, dropout=0.3)
 print(modelo_3)
 modelos = [modelo_1, modelo_2, modelo_3]
 
 print("criando avaliador de MUITOS MODELOS n vezes\n")
-avaliador_de_varios_modelos = evaluator_manner.Evaluator(data_train=train, data_test=test)
+avaliador_de_varios_modelos = evaluator_manner.Evaluator(
+    data_train=train, data_test=test
+)
 avaliador_de_varios_modelos.models = modelos
 print(avaliador_de_varios_modelos)
 
 print("AVALIANDO de MUITOS MODELOS n vezes\n")
 n_modelos_avaliados_n_vezes = avaliador_de_varios_modelos.evaluate_n_models_n_times()
 print(n_modelos_avaliados_n_vezes)
+
+[modelo_i.saving() for modelo_i in modelos]
