@@ -46,8 +46,17 @@ class ModelArtificalInterface(ModelInterface):
 
     def saving(self):
         self.model.save(self._resolve_model_name())
+        logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
     def loading(self, model_name=None):
+        """Load model locally and remotely. For remote option, is necessary to fill `configure.json/model_path_remote`.
+
+        Args:
+            model_name (str, optional): The known `path + model` name. Defaults to None.
+
+        Raises:
+            ose: Exception OSError if model not found locally or remotely
+        """
         try:
             self.model = (
                 tf.keras.models.load_model(model_name)
@@ -74,6 +83,16 @@ class ModelArtificalInterface(ModelInterface):
             )
 
     def fiting(self, x, y, verbose=0):
+        """Fit model based on Train data
+
+        Args:
+            x (Train.x): Data used as input to the model
+            y (Train.y): Data used as outcome to the model
+            verbose (int, optional): Lied to observe the fit model in run time. Defaults to 0.
+
+        Returns:
+            bool: True if everything finish well 
+        """
         try:
             self.model.fit(
                 x=x,
@@ -89,12 +108,16 @@ class ModelArtificalInterface(ModelInterface):
             return True
         except:
             logger.error_log(self.__class__.__name__, self.fiting.__name__, "Fit model")
+            return False
 
     def predicting(self, data):
-        """
-        Make predictions (often test data)
-        :param data: data to make predictions
-        :return: prediction and prediction's rmse
+        """Make predictions (often test data)
+
+        Args:
+            data (Test): data to make predictions
+
+        Returns:
+            Test.y_hat and Test.rmse: predictions and its rmse
         """
         yhat = self.model.predict(data.x, verbose=0)
         rmse_scores = list()
@@ -102,5 +125,9 @@ class ModelArtificalInterface(ModelInterface):
             mse = mean_squared_error(data.y[idx], yhat[idx])
             rmse = sqrt(mse)
             rmse_scores.append(rmse)
+
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "Model Predicted"
+        )
 
         return yhat, rmse_scores

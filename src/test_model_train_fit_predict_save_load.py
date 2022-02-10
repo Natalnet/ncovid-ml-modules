@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
-
 from statistics import mean
+
 import data_manner
+import evaluator_manner
 from models.artificial import lstm_manner
 
 # --------- EXTRACT DATA
@@ -25,10 +26,17 @@ print(test.x.shape, test.y.shape)
 # lstm_model_web.loading()
 
 lstm_model_local_2 = lstm_manner.ModelLSTM(path)
-lstm_model_local_2.creating()
-lstm_model_local_2.fiting(train.x, train.y, verbose=0)
-# test.y_hat, test.rmse = lstm_model_local_2.predicting(test)
-# print(mean(test.rmse))
+lstm_model_local_2.loading()
+# lstm_model_local_2.fiting(train.x, train.y, verbose=0)
+
+avaliador_modelo = evaluator_manner.Evaluator(lstm_model_local_2, train, test)
+ys, y_hats, rmses = avaliador_modelo.evaluate_model()
+print(mean(rmses))
+
+plt.plot(ys, label="real", linewidth=1)
+plt.plot(y_hats, label="pred", linewidth=1)
+plt.legend(loc="best")
+plt.show()
 
 lstm_model_local_2.saving()
 
