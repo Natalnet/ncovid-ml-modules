@@ -18,19 +18,18 @@ class ModelLSTM(ModelArtificalInterface):
 
         super().__init__(locale)
 
-        if model:
-            self.model = model
+        self.model = model if model else None
 
-        if not model or (data_window_size or nodes or dropout):
+        if data_window_size or nodes or dropout:
             if data_window_size:
                 self.data_window_size = data_window_size
             if nodes:
                 self.nodes = nodes
             if dropout:
                 self.dropout = dropout
-            self.model = self.__model_architecture()
+            # self.model = self.__model_architecture()
 
-    def __model_architecture(self):
+    def _model_architecture(self):
         input_model = Input(shape=(self.data_window_size, self.n_features))
         lstm_1 = LSTM(self.nodes, activation="relu")(input_model)
         repeat_vect = RepeatVector(self.data_window_size)(lstm_1)

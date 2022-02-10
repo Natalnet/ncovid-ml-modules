@@ -1,12 +1,12 @@
-import logger
+import io, requests, h5py
+import tensorflow as tf
+from tensorflow.keras.callbacks import EarlyStopping
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
+import logger
 import configs_manner
 from models.model_interface import ModelInterface
-from tensorflow.keras.callbacks import EarlyStopping
-
-import tensorflow as tf
 
 
 class ModelArtificalInterface(ModelInterface):
@@ -49,25 +49,29 @@ class ModelArtificalInterface(ModelInterface):
 
     def loading(self, model_name=None):
         try:
-            model = (
+            self.model = (
                 tf.keras.models.load_model(model_name)
                 if model_name
                 else tf.keras.models.load_model(self._resolve_model_name())
             )
         except OSError:
             try:
-                model = tf.keras.models.load_model(self._resolve_model_name(True))
+                model_web_content = requests.get(self._resolve_model_name(True)).content
+                model_bin = io.BytesIO(model_web_content)
+                model_obj = h5py.File(model_bin, "r")
+                self.model = tf.keras.models.load_model(model_obj)
+
             except OSError as ose:
                 logger.error_log(
                     self.__class__.__name__,
                     self.loading.__name__,
                     "Model not found - {}".format(ose.__str__),
                 )
+                raise ose("Model not found")
         else:
             logger.debug_log(
                 self.__class__.__name__, self.loading.__name__, "Model loaded"
             )
-            return model
 
     def fiting(self, x, y, verbose=0):
         try:

@@ -7,7 +7,7 @@ from models.artificial import lstm_manner
 # --------- EXTRACT DATA
 repo = "p971074907"
 path = "brl:rn"
-feature = "date:deaths:newCases:"
+feature = "date:newDeaths:newCases:"
 begin = "2020-05-01"
 end = "2021-07-01"
 
@@ -19,23 +19,29 @@ train, test = construtor_dados.build_train_test(data_araraquara)
 print(train.x.shape, train.y.shape)
 print(test.x.shape, test.y.shape)
 
-# --------- MODEL: CREATE - TRAIN - SAVE
-lstm_model = lstm_manner.ModelLSTM("brl:rn")
-lstm_model.loading()
-if lstm_model.fiting(train.x, train.y, verbose=0):
-    test.y_hat, test.rmse = lstm_model.predicting(test)
-    print(mean(test.rmse))
+# --------- MODEL: CREATE NEW / LOAD LOCALY / LOAD REMOTELY - TRAIN - SAVE
 
-lstm_model.saving()
+# lstm_model_web = lstm_manner.ModelLSTM("brl:to")
+# lstm_model_web.loading()
+
+lstm_model_local_2 = lstm_manner.ModelLSTM(path)
+lstm_model_local_2.creating()
+lstm_model_local_2.fiting(train.x, train.y, verbose=0)
+# test.y_hat, test.rmse = lstm_model_local_2.predicting(test)
+# print(mean(test.rmse))
+
+lstm_model_local_2.saving()
 
 construtor_dados_2 = data_manner.DataConstructor()
 construtor_dados_2.is_predicting = True
 
 # --------- BUILDING TEST
 test_2 = construtor_dados_2.build_test(data_araraquara)
-print(test_2.x.shape, test_2.y_hat.shape)
 
 # --------- MODEL: LOAD - PREDICT
-lstm_model_2 = lstm_manner.ModelLSTM(path)
-lstm_model_2.loading()
-test_2.y_hat, test_2.rmse = lstm_model_2.predicting(test)
+test_2.y_hat, test_2.rmse = lstm_model_local_2.predicting(test_2)
+
+plt.plot(test_2.y.reshape(-1)[:-7], label="real")
+plt.plot(test_2.y_hat.reshape(-1)[7:], label="pred")
+plt.legend(loc="best")
+plt.show()

@@ -38,6 +38,9 @@ def collect_Artificial():
     infos["data_is_accumulated_values"] = eval(
         data["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
     )
+    infos["data_is_apply_moving_average"] = eval(
+        data["model_configs"]["Artificial"]["data_configs"]["is_apply_moving_average"]
+    )
     infos["data_window_size"] = data["model_configs"]["Artificial"]["data_configs"][
         "window_size"
     ]
@@ -59,10 +62,7 @@ with open("../doc/configure.json") as json_file:
         model_path = (
             data["folder_configs"]["data_path"] + data["folder_configs"]["model_path"]
         )
-        model_path_remote = (
-            data["folder_configs"]["data_path"]
-            + data["folder_configs"]["model_path_remote"]
-        )
+        model_path_remote = data["folder_configs"]["model_path_remote"]
         glossary_file = (
             data["folder_configs"]["docs_path"]
             + data["folder_configs"]["glossary_file"]

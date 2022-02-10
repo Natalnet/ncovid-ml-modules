@@ -33,9 +33,10 @@
       "dropout": 0.3,
       "batch_size": 64,
       "earlystop": 50,
-      "is_output_in_input": "True",
+      "is_output_in_input": "False",
       "data_configs": {
         "is_accumulated_values": "False",
+        "is_apply_moving_average": "True",
         "window_size": 7,
         "data_test_size_in_days": 21,
         "type_norm": ""

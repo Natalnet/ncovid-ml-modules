@@ -140,28 +140,28 @@ class DataConstructor:
         Returns:
             dataframe: Pandas dataframe
         """
-        import pandas as pd
+
+        def read_file(file_name):
+            import pandas as pd
+
+            return pd.read_csv(file_name, parse_dates=["date"], index_col="date")
 
         if repo and feature and begin and end is not None:
             if self.is_predicting:
                 begin, end = self.__add_period(begin, end)
 
-            dataframe = pd.read_csv(
-                (
-                    "".join(
-                        f"http://ncovid.natalnet.br/datamanager/"
-                        f"repo/{repo}/"
-                        f"path/{path}/"
-                        f"feature/{feature}/"
-                        f"begin/{begin}/"
-                        f"end/{end}/as-csv"
-                    )
-                ),
-                parse_dates=["date"],
-                index_col="date",
+            dataframe = read_file(
+                "".join(
+                    f"http://ncovid.natalnet.br/datamanager/"
+                    f"repo/{repo}/"
+                    f"path/{path}/"
+                    f"feature/{feature}/"
+                    f"begin/{begin}/"
+                    f"end/{end}/as-csv"
+                )
             )
         else:
-            dataframe = pd.read_csv(path, parse_dates=["date"], index_col="date",)
+            dataframe = read_file(path)
 
         preprocessor = self.Preprocessing()
         return preprocessor.pipeline(dataframe)
@@ -202,7 +202,8 @@ class DataConstructor:
             1- Resolve cumulativa columns
             2- Remove columns with any nan values
             3- Remove columns with unique values
-            4- Convert dataframe to list
+            4- Apply moving average
+            5- Convert dataframe to list
 
             Args:
                 dataframe (pandas): Temporal time series
@@ -222,12 +223,14 @@ class DataConstructor:
             dataframe_not_cumulative = self.remove_na_values(
                 self.solve_cumulative(dataframe)
             )
+
             dataframe_columns_elegible = self.select_columns_with_values(
                 dataframe_not_cumulative
             )
-            dataframe_as_list = self.convert_dataframe_to_list(
-                dataframe_columns_elegible
-            )
+
+            dataframe_rolled = self.moving_average(dataframe_columns_elegible)
+
+            dataframe_as_list = self.convert_dataframe_to_list(dataframe_rolled)
 
             logger.debug_log(
                 self.__class__.__name__, self.pipeline.__name__, "Pipeline finished",
@@ -236,12 +239,19 @@ class DataConstructor:
 
         def solve_cumulative(self, dataframe):
             if configs_manner.model_infos["data_is_accumulated_values"]:
-                for column in dataframe.columns:
-                    dataframe[column] = (
-                        dataframe[column]
-                        .diff(configs_manner.model_infos["data_window_size"])
-                        .dropna()
-                    )
+                return dataframe.diff(
+                    configs_manner.model_infos["data_window_size"]
+                ).dropna()
+            return dataframe
+
+        def moving_average(self, dataframe):
+            if configs_manner.model_infos["data_is_apply_moving_average"]:
+                return (
+                    dataframe.rolling(configs_manner.model_infos["data_window_size"])
+                    .mean()
+                    .fillna(method="bfill")
+                    .fillna(method="ffill")
+                )
             return dataframe
 
         def select_columns_with_values(self, dataframe):

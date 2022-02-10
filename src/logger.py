@@ -1,5 +1,7 @@
 import logging
 
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
 
 LOG_FILENAME = "../doc/logfile.log"
 logging.basicConfig(
