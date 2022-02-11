@@ -47,14 +47,14 @@ class PredictorConstructor:
         data = data_to_predict if data_to_predict is not None else self.input_data
         try:
             y_hat, rmse = self.model.predicting(data)
-            return self.__list_to_string(y_hat.reshape(-1)), rmse
+            return y_hat.reshape(-1), rmse
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
             raise
 
-    def __list_to_string(self, y_hat):
+    def predictions_to_weboutput(self, y_hat):
         period = pd.date_range(self.begin, self.end)
         returned_dictionaty = list()
         for date, value in zip(period, y_hat):

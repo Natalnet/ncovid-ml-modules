@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping
 from math import sqrt
 from sklearn.metrics import mean_squared_error
+from data_manner import Test
 
 import logger
 import configs_manner
@@ -10,7 +11,7 @@ from models.model_interface import ModelInterface
 
 
 class ModelArtificalInterface(ModelInterface):
-    def __init__(self, locale):
+    def __init__(self, locale: str):
         super().__init__(locale)
         self.nodes = configs_manner.model_infos["model_nodes"]
         self.epochs = configs_manner.model_infos["model_epochs"]
@@ -48,7 +49,7 @@ class ModelArtificalInterface(ModelInterface):
         self.model.save(self._resolve_model_name())
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
-    def loading(self, model_name=None):
+    def loading(self, model_name: str = None):
         """Load model locally and remotely. For remote option, is necessary to fill `configure.json/model_path_remote`.
 
         Args:
@@ -82,7 +83,7 @@ class ModelArtificalInterface(ModelInterface):
                 self.__class__.__name__, self.loading.__name__, "Model loaded"
             )
 
-    def fiting(self, x, y, verbose=0):
+    def fiting(self, x: list, y: list, verbose: int = 0):
         """Fit model based on Train data
 
         Args:
@@ -112,7 +113,7 @@ class ModelArtificalInterface(ModelInterface):
             )
             raise
 
-    def predicting(self, data):
+    def predicting(self, data: Test):
         """Make predictions (often test data)
 
         Args:

@@ -3,7 +3,13 @@ from data_manner import Train, Test
 
 
 class Evaluator:
-    def __init__(self, model=None, data_train=None, data_test=None, n_repeat=1):
+    def __init__(
+        self,
+        model=None,
+        data_train: list = None,
+        data_test: list = None,
+        n_repeat: int = 1,
+    ):
         self._data_train = data_train
         self._data_test = data_test
         self.n_repeat = n_repeat
@@ -48,7 +54,9 @@ class Evaluator:
     def clean_models(self):
         self._models = list()
 
-    def evaluate_model(self, model=None, data_train=None, data_test=None):
+    def evaluate_model(
+        self, model=None, data_train: list = None, data_test: list = None
+    ):
         """Evaluate model over train and test
 
         Args:
@@ -91,7 +99,12 @@ class Evaluator:
         return y, history.y_hat, history.rmse[-1]
 
     def evaluate_model_n_times(
-        self, model=None, train=None, test=None, n_repeat=None, verbose=0
+        self,
+        model=None,
+        train: list = None,
+        test: list = None,
+        n_repeat: int = 1,
+        verbose=0,
     ):
         """
         Fit and Evaluate a single model over train and test multiple times
@@ -126,7 +139,12 @@ class Evaluator:
         return list(zip(regressor_list, y_list, y_hat_list, rmse_list))
 
     def evaluate_n_models_n_times(
-        self, list_models=None, train=None, test=None, n_repeat=1, verbose=0
+        self,
+        list_models: list = None,
+        train: list = None,
+        test: list = None,
+        n_repeat: int = 1,
+        verbose=0,
     ):
         """
         Fit and Evaluate multiple models over train and test multiple times

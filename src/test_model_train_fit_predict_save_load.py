@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 from statistics import mean
 
+import logger
 import data_manner
 from models.artificial import lstm_manner
+from predictor_manner import PredictorConstructor
 
 # --------- EXTRACT DATA
 repo = "p971074907"
@@ -24,8 +26,6 @@ lstm_model_local_2 = lstm_manner.ModelLSTM(path)
 lstm_model_local_2.creating()
 lstm_model_local_2.fiting(train.x, train.y, verbose=0)
 lstm_model_local_2.saving()
-
-
 test.y_hat, test.rmse = lstm_model_local_2.predicting(test)
 print(mean(test.rmse))
 
@@ -33,4 +33,13 @@ plt.plot(test.y.reshape(-1)[:-7], label="real")
 plt.plot(test.y_hat.reshape(-1)[7:], label="pred")
 plt.legend(loc="best")
 plt.show()
-print()
+
+# --------- USING PREDICTOR WEBSITE NCOVID
+predictor_rn = PredictorConstructor(path, repo, feature, begin, end)
+y_hat_predictor, rmse_predictor = predictor_rn.predict()
+print(rmse_predictor)
+plt.plot(y_hat_predictor, label="predictor")
+plt.show()
+y_hat_predictor = predictor_rn.predictions_to_weboutput(y_hat_predictor)
+
+logger.debug_log("MAIN", " - ", "FINISH")

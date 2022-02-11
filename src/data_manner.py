@@ -1,16 +1,18 @@
 import numpy as np
+import pandas as pd
 
 import logger
 import configs_manner
 
 
 class DataConstructor:
-    def __init__(self, is_predicting=False):
+    def __init__(self, is_predicting: bool = False):
         """Data manager designed to collect and prepare data for the project.
         More details look up at doc/configure.json file.
         
         Args:
-            is_predicting (bool, optional): Flag that descripts if data is for testing. Defaults extracted from configure.json.
+            is_predicting (bool, optional): Flag that descripts if data is for testing. 
+            Defaults extracted from configure.json.
         """
 
         self.is_predicting = (
@@ -37,7 +39,7 @@ class DataConstructor:
         self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
         self.type_norm = configs_manner.model_infos["data_type_norm"]
 
-    def build_train_test(self, data):
+    def build_train_test(self, data: list):
         """To build train and test data for training and predicting.
 
         Args:
@@ -56,7 +58,7 @@ class DataConstructor:
         data_train, data_test = self.split_data_train_test(data_t)
         return self.build_train(data_train), self.build_test(data_test)
 
-    def build_train(self, data):
+    def build_train(self, data: list):
         """To build train data for training.
 
         Args:
@@ -80,7 +82,7 @@ class DataConstructor:
             )
             raise
 
-    def build_test(self, data):
+    def build_test(self, data: list):
         """To build test data for predicting.
 
         Args:
@@ -125,7 +127,7 @@ class DataConstructor:
     def __transpose_data(self, data):
         return np.array(data).T
 
-    def split_data_train_test(self, data):
+    def split_data_train_test(self, data: list):
         """Split a numpy bi-dimensional array in train and test.
 
         Args:
@@ -145,13 +147,21 @@ class DataConstructor:
         train, test = data[:-n_test], data[-n_test:]
         return train, test
 
-    def collect_dataframe(self, path, repo=None, feature=None, begin=None, end=None):
+    def collect_dataframe(
+        self,
+        path: str,
+        repo: str = None,
+        feature: str = None,
+        begin: str = None,
+        end: str = None,
+    ):
         """Collect a dataframe from the repository or web
         
         Args:
             path (str): a raw web link or db locale to be predicted (eg. `brl:rn`)
             repo (str, optional): DB repository that contains the dataframe. Defaults to None.
-            feature (str, optional): Features separated by `:`, presented in the dataframe(eg. `date:deaths:newCases:`). Defaults to None.
+            feature (str, optional): Features separated by `:`, presented in the dataframe(eg. `date:deaths:newCases:`). 
+                Defaults to None.
             begin (str, optional): First day of the temporal time series `YYYY-MM-DD`. Defaults to None.
             end (str, optional): Last day of the temporal time series `YYYY-MM-DD`. Defaults to None.
 
@@ -159,7 +169,7 @@ class DataConstructor:
             dataframe: Pandas dataframe
         """
 
-        def read_file(file_name):
+        def read_file(file_name: str):
             import pandas as pd
 
             return pd.read_csv(file_name, parse_dates=["date"], index_col="date")
@@ -184,7 +194,7 @@ class DataConstructor:
         preprocessor = self.Preprocessing()
         return preprocessor.pipeline(dataframe)
 
-    def __add_period(self, begin, end):
+    def __add_period(self, begin: str, end: str):
         import datetime
 
         DATE_FORMAT = "%Y-%m-%d"
@@ -215,7 +225,7 @@ class DataConstructor:
             # TO DO
             pass
 
-        def pipeline(self, dataframe):
+        def pipeline(self, dataframe: pd.DataFrame):
             """Auto and basic pipeline applied to the data
             1- Resolve cumulativa columns
             2- Remove columns with any nan values
@@ -255,14 +265,14 @@ class DataConstructor:
             )
             return dataframe_as_list
 
-        def solve_cumulative(self, dataframe):
+        def solve_cumulative(self, dataframe: pd.DataFrame):
             if configs_manner.model_infos["data_is_accumulated_values"]:
                 return dataframe.diff(
                     configs_manner.model_infos["data_window_size"]
                 ).dropna()
             return dataframe
 
-        def moving_average(self, dataframe):
+        def moving_average(self, dataframe: pd.DataFrame):
             if configs_manner.model_infos["data_is_apply_moving_average"]:
                 return (
                     dataframe.rolling(configs_manner.model_infos["data_window_size"])
@@ -272,7 +282,7 @@ class DataConstructor:
                 )
             return dataframe
 
-        def select_columns_with_values(self, dataframe):
+        def select_columns_with_values(self, dataframe: pd.DataFrame):
             def is_different_values(s):
                 a = s.to_numpy()  # s.values (pandas<0.24)
                 return (a[0] == a).all()
@@ -283,15 +293,15 @@ class DataConstructor:
             ]
             return dataframe.loc[:, column_with_values]
 
-        def remove_na_values(self, dataframe):
+        def remove_na_values(self, dataframe: pd.DataFrame):
             return dataframe.dropna()
 
-        def convert_dataframe_to_list(self, dataframe):
+        def convert_dataframe_to_list(self, dataframe: pd.DataFrame):
             return [dataframe[col].values for col in dataframe.columns]
 
 
 class Data:
-    def __init__(self, step_size=None, type_norm=None):
+    def __init__(self, step_size: int = None, type_norm: str = None):
         self.x = None
         self.y = None
         self._y_hat = None
@@ -323,7 +333,7 @@ class Data:
 
 
 class Train(Data):
-    def __init__(self, data, step_size=None, type_norm=None):
+    def __init__(self, data: np.array, step_size: int = None, type_norm: str = None):
         """Data Train Object. Use the attribute `model_type` in `docs/configure.json` to determine the type of data should be expected.
 
         Args:
@@ -382,7 +392,7 @@ class Train(Data):
 
 
 class Test(Data):
-    def __init__(self, data, step_size=None, type_norm=None):
+    def __init__(self, data, step_size: int = None, type_norm: str = None):
         """Data Test Object. Use the attribute `model_type` in `docs/configure.json` to determine the type of data should be expected
 
         Args:
