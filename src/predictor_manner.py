@@ -20,6 +20,11 @@ class PredictorConstructor:
         try:
             self.input_data = self.__data_collector(path, repo, feature, begin, end)
             self.model = self.__model_assemble(path)
+            logger.debug_log(
+                self.__class__.__name__,
+                self.__init__.__name__,
+                "Predictor: All requirements have been met: Data and model found.",
+            )
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
