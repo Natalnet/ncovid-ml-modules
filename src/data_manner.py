@@ -16,11 +16,14 @@ class DataConstructor:
         self.is_predicting = (
             is_predicting if is_predicting else configs_manner.model_is_predicting
         )
-        eval(f"self._constructor_{configs_manner.model_type}()")
 
-        logger.debug_log(
-            self.__class__.__name__, self.__init__.__name__, "Data Constructor Created"
-        )
+        try:
+            getattr(self, f"_constructor_{configs_manner.model_type}")()
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
+            )
+            raise
 
     def _constructor_Autoregressive(self):
         self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
@@ -48,6 +51,7 @@ class DataConstructor:
         assert type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_test.__name__, "Format data"
         )
+
         data_t = self.__transpose_data(data)
         data_train, data_test = self.split_data_train_test(data_t)
         return self.build_train(data_train), self.build_test(data_test)
@@ -66,7 +70,15 @@ class DataConstructor:
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_train.__name__, "Format data",
         )
-        return eval(f"self._build_data_{configs_manner.model_type}(Train, data)")
+        try:
+            return getattr(self, f"_build_data_{configs_manner.model_type}")(
+                Train, data
+            )
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.build_train.__name__, f"Error: {e}."
+            )
+            raise
 
     def build_test(self, data):
         """To build test data for predicting.
@@ -82,7 +94,13 @@ class DataConstructor:
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_test.__name__, "Format data",
         )
-        return eval(f"self._build_data_{configs_manner.model_type}(Test, data)")
+        try:
+            return getattr(self, f"_build_data_{configs_manner.model_type}")(Test, data)
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.build_test.__name__, f"Error: {e}."
+            )
+            raise
 
     def _build_data_Autoregressive(self, data_type, data):
         # TO DO
@@ -315,15 +333,15 @@ class Train(Data):
         """
         try:
             super().__init__(step_size, type_norm)
-            self.x, self.y = eval(
-                f"self._builder_train_{configs_manner.model_type}(data)"
-            )
+            self.x, self.y = getattr(
+                self, f"_builder_train_{configs_manner.model_type}"
+            )(data)
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Train Created"
             )
         except Exception as e:
             logger.error_log(
-                self.__class__.__name__, self.__init__.__name__, e.__traceback__.__str__
+                self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
 
     def _builder_train_Autoregressive(self, data):
@@ -374,15 +392,15 @@ class Test(Data):
         """
         try:
             super().__init__(step_size, type_norm)
-            self.x, self.y = eval(
-                f"self._builder_test_{configs_manner.model_type}(data)"
-            )
+            self.x, self.y = getattr(
+                self, f"_builder_test_{configs_manner.model_type}"
+            )(data)
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Test Created"
             )
         except Exception as e:
             logger.error_log(
-                self.__class__.__name__, self.__init__.__name__, e.__traceback__.__str__
+                self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
 
     def _builder_test_Autoregressive(self, data):
