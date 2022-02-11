@@ -72,13 +72,11 @@ with open("../doc/configure.json") as json_file:
         model_subtype = data["model_configs"][model_type]["model"]
         model_is_predicting = eval(data["model_configs"]["is_predicting"])
 
-        model_infos = eval(f"collect_{model_type}()")
+        model_infos = getattr(sys.modules[__name__], f"collect_{model_type}")()
         logger.debug_log(
             "configs_manner.py", "loading configurations", "Configurations loaded"
         )
 
     except Exception as e:
-        logger.error_log(
-            "configs_manner.py", "loading configurations", e.__traceback__.__str__
-        )
+        logger.error_log("configs_manner.py", "loading configurations", f"Error: {e}.")
 

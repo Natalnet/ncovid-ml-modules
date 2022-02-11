@@ -106,9 +106,11 @@ class ModelArtificalInterface(ModelInterface):
                 self.__class__.__name__, self.fiting.__name__, "Model fitted"
             )
             return True
-        except:
-            logger.error_log(self.__class__.__name__, self.fiting.__name__, "Fit model")
-            return False
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.fiting.__name__, f"Error: {e}."
+            )
+            raise
 
     def predicting(self, data):
         """Make predictions (often test data)
