@@ -1,44 +1,87 @@
-import data_manner
 import datetime
 import pandas as pd
-import configs_manner
-exec(f'from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner')
 
-class PredictorConstructor():
+import logger
+import data_manner
+import configs_manner
+
+exec(
+    f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
+)
+
+
+class PredictorConstructor:
     def __init__(self, path, repo=None, feature=None, begin=None, end=None):
+        """Predictor designed to forecast values through trained models.
+
+        Args:
+            path (string): [description]
+            repo (string, optional): The key number of the repository to data acquisition. Defaults to None.
+            feature (string, optional): Columns names to be used as model input. Defaults to None.
+            begin (string, optional): Date to start the forecasting. Defaults to None.
+            end (string, optional): Date to finish the forecasting. Defaults to None.
+        """
         self.path = path
         self.repo = repo
         self.feature = feature
-        self.begin = begin 
+        self.begin = begin
         self.end = end
-        self.input_data = self.data_collector()
-        self.model = self.model_assemble()
+        try:
+            self.input_data = self.__data_collector(path, repo, feature, begin, end)
+            self.model = self.__model_assemble(path)
+            logger.debug_log(
+                self.__class__.__name__,
+                self.__init__.__name__,
+                "Predictor: All requirements have been met: Data and model found.",
+            )
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
+            )
 
-    def model_assemble(self):
-        model = 'Model' + str(configs_manner.model_subtype.upper())
-        model_obj = getattr(model_manner, model)(self.path)
+    def __get_model_obj(self, path):
+        model = "Model" + str(configs_manner.model_subtype.upper())
+        return getattr(model_manner, model)(path)
+    
+    def __model_assemble(self, path):
+        model_obj = self.__get_model_obj(path)
         model_obj.loading()
         return model_obj
 
-    def data_collector(self):
-        self.data_obj = data_manner.DataConstructor()
-        self.data_obj.is_predicting = True
-        self.data_collected = self.data_obj.collect_to_predict(self.path, self.repo, self.feature, self.begin, self.end)
-    
-        return self.data_obj.build_test(self.data_collected)
+    def __data_collector(self, path, repo=None, feature=None, begin=None, end=None):
+        data_constructor = data_manner.DataConstructor(is_predicting=True)
+        data_collected = data_constructor.collect_dataframe(
+            path, repo, feature, begin, end
+        )
+        return data_constructor.build_test(data_collected)
 
-    def predict(self):
-        predicted, self.rmse = self.model.predicting(self.input_data)
-        self.predicted = predicted.reshape(-1) 
-        return self.convert_to_string_format()
+    def predict(self, data_to_predict=None):
+        """This method forecast deaths values to data in the constructor object from begin to end date.
 
-    def convert_to_string_format(self):
-        time_interval = pd.date_range(self.begin, self.end)
+        Args:
+            data_to_predict (object, optional): Data object containing the data.x and a data.y variables. Defaults to None.
 
-        returned_dictionaty = []
-        for date, value in zip(time_interval, self.predicted):
-            str_value = str(value)
-            str_date = datetime.datetime.strftime(date, "%Y-%m-%d")
-            returned_dictionaty.append({"date": str_date, "deaths": str_value})
+        Returns:
+            string: A string containing the forecasting values and them respective date. 
+        """
+        data = data_to_predict if data_to_predict is not None else self.input_data
+        try:
+            y_hat, rmse = self.model.predicting(data)
+            return self.__list_to_string(y_hat.reshape(-1)), rmse
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
+            )
+            raise
 
+    def __list_to_string(self, y_hat):
+        period = pd.date_range(self.begin, self.end)
+        returned_dictionaty = list()
+        for date, value in zip(period, y_hat):
+            returned_dictionaty.append(
+                {
+                    "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
+                    "prediction": str(value),
+                }
+            )
         return str(returned_dictionaty)
