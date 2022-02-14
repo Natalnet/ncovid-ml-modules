@@ -75,20 +75,21 @@ class Evaluator:
         for idx, num in enumerate(data_test.x):
             y.append(history.y)
             # predict the week
-            yhat, rmse = model.predicting(history)
+            yhat, rmse, score, score_test, score_train = model.predicting(history)
             # store the predictions
             history.y_hat.append(yhat)
             history.rmse.append(rmse)
             # get real observation and add to history for predicting the next week
             history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
             history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
+            #print(np.array(history.rmse[0]).shape)
         # evaluate predictions days for each week
         # predictions = np.array(predictions)
         y = y[-1].reshape(y[-1].shape[0], y[-1].shape[1])[:, :1]
         history.y_hat = history.y_hat[-1].reshape(
             history.y_hat[-1].shape[0], history.y_hat[-1].shape[1]
         )[:, :1]
-        return y, history.y_hat, history.rmse[-1]
+        return y, history.y_hat, history.rmse, score, score_test, score_train
 
     def evaluate_model_n_times(
         self, model=None, train=None, test=None, n_repeat=None, verbose=0

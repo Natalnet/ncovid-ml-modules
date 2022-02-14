@@ -38,7 +38,7 @@
         "is_accumulated_values": "False",
         "is_apply_moving_average": "True",
         "window_size": 7,
-        "data_test_size_in_days": 21,
+        "data_test_size_in_days": 35,
         "type_norm": ""
       }
     }

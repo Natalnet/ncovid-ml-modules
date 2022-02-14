@@ -19,6 +19,7 @@ class ModelArtificalInterface(ModelInterface):
         self.is_output_in_input = configs_manner.model_infos["model_is_output_in_input"]
         self.is_predicting = configs_manner.model_is_predicting
         self.data_window_size = configs_manner.model_infos["data_window_size"]
+        self.data_test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
         self.earlystop = EarlyStopping(
             monitor="loss",
             mode="min",
@@ -123,13 +124,37 @@ class ModelArtificalInterface(ModelInterface):
         """
         yhat = self.model.predict(data.x, verbose=0)
         rmse_scores = list()
+        score = list()
         for idx, _ in enumerate(yhat):
             mse = mean_squared_error(data.y[idx], yhat[idx])
             rmse = sqrt(mse)
             rmse_scores.append(rmse)
 
+        # calculate overall RMSE
+        s = 0
+        s_test = 0
+        s_train = 0
+        n_test = self.data_test_size_in_days
+        n_input = self.data_window_size
+        for row in range(data.y.shape[0]):
+            for col in range(data.y.shape[1]):
+                # geral (treino + test)
+                s += (data.y[row, col] - yhat[row, col])**2
+                # só teste
+                if row > data.y.shape[0]-(n_test/n_input):
+                    s_test += (data.y[row, col] - yhat[row, col])**2
+                # só treino
+                if row < data.y.shape[0]-(n_test/n_input):
+                    s_train += (data.y[row, col] - yhat[row, col])**2
+        # rmse geral (treino + teste)
+        score = sqrt(s / data.y.shape[1])
+        # rmse para dados de teste (test)
+        score_test = sqrt(s_test / data.y.shape[1])
+        # rmse para dados de treino (train)
+        score_train = sqrt(s_train / data.y.shape[1])
+
         logger.debug_log(
             self.__class__.__name__, self.predicting.__name__, "Model Predicted"
         )
 
-        return yhat, rmse_scores
+        return yhat, rmse_scores, score, score_test, score_train

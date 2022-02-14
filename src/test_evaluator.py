@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from statistics import mean
 
 import data_manner
@@ -29,10 +30,13 @@ lstm_model_local_2 = lstm_manner.ModelLSTM(path)
 lstm_model_local_2.loading()
 
 avaliador_modelo = evaluator_manner.Evaluator(lstm_model_local_2, train, test)
-ys, y_hats, rmses = avaliador_modelo.evaluate_model()
-print(mean(rmses))
+ys, y_hats, rmses, score, score_test, score_train = avaliador_modelo.evaluate_model()
+#print(np.array(rmses).shape)
+print(score, score_test, score_train)
 
 plt.plot(ys, label="real", linewidth=1)
 plt.plot(y_hats, label="pred", linewidth=1)
+# plt.plot(np.array(rmses[0]), label='rmse 0')
+# plt.plot(np.array(rmses[1]), label='rmse 1')
 plt.legend(loc="best")
 plt.show()
