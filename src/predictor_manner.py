@@ -46,8 +46,8 @@ class PredictorConstructor:
     def predict(self, data_to_predict=None):
         data = data_to_predict if data_to_predict is not None else self.input_data
         try:
-            y_hat, rmse = self.model.predicting(data)
-            return y_hat.reshape(-1), rmse
+            y_hat = self.model.predicting(data)
+            return y_hat.reshape(-1)
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."

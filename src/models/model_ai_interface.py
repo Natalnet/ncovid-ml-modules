@@ -123,14 +123,29 @@ class ModelArtificalInterface(ModelInterface):
             Test.y_hat and Test.rmse: predictions and its rmse
         """
         yhat = self.model.predict(data.x, verbose=0)
-        rmse_scores = list()
-        for idx, _ in enumerate(yhat):
-            mse = mean_squared_error(data.y[idx], yhat[idx])
-            rmse = sqrt(mse)
-            rmse_scores.append(rmse)
 
         logger.debug_log(
-            self.__class__.__name__, self.predicting.__name__, "Model Predicted"
+            self.__class__.__name__, self.predicting.__name__, "Data predicted"
         )
 
-        return yhat, rmse_scores
+        return yhat
+
+    def calculate_rmse(self, y_orig: list, y_hat: list):
+        if len(y_orig) != len(y_hat):
+            logger.error_log(
+                self.__class__.__name__,
+                self.calculate_rmse.__name__,
+                "The list must to have same size",
+            )
+            return None
+
+        rmse = [
+            sqrt(mean_squared_error(y_hat[idx], y_orig[idx]))
+            for idx, _ in enumerate(y_orig)
+        ]
+
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "RMSE calculated"
+        )
+
+        return rmse
