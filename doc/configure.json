@@ -27,12 +27,12 @@
     },
     "Artificial": {
       "model": "lstm",
-      "nodes": 300,
-      "epochs": 100,
-      "dropout": 0.1,
-      "batch_size": 32,
-      "earlystop": 50,
-      "is_output_in_input": "False",
+      "nodes": 350,
+      "epochs": 200,
+      "dropout": 0.15,
+      "batch_size": 64,
+      "earlystop": 75,
+      "is_output_in_input": "True",
       "is_predicting": "False",
       "data_configs": {
         "is_accumulated_values": "False",
