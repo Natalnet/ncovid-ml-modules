@@ -1,14 +1,13 @@
+import logger
 import sys, json, os.path
 
 sys.path.append("../")
-
-from enums import model_enum
 
 
 assert os.path.isfile("../doc/configure.json"), "Config file unreached"
 
 
-def collect_autoregressive():
+def collect_Autoregressive():
     infos = {}
     infos["model_p"] = data["model_configs"]["Autoregressive"]["p"]
     infos["model_d"] = data["model_configs"]["Autoregressive"]["d"]
@@ -16,7 +15,7 @@ def collect_autoregressive():
     return infos
 
 
-def collect_epidemiological():
+def collect_Epidemiological():
     infos = {}
     infos["model_s_initial"] = data["model_configs"]["Epidemiological"]["s_initial"]
     infos["model_i_initial"] = data["model_configs"]["Epidemiological"]["i_initial"]
@@ -26,7 +25,7 @@ def collect_epidemiological():
     return infos
 
 
-def collect_artificial():
+def collect_Artificial():
     infos = {}
     infos["model_nodes"] = data["model_configs"]["Artificial"]["nodes"]
     infos["model_epochs"] = data["model_configs"]["Artificial"]["epochs"]
@@ -36,11 +35,11 @@ def collect_artificial():
     infos["model_is_output_in_input"] = eval(
         data["model_configs"]["Artificial"]["is_output_in_input"]
     )
-    infos["model_is_predicting"] = eval(
-        data["model_configs"]["Artificial"]["is_predicting"]
-    )
     infos["data_is_accumulated_values"] = eval(
         data["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
+    )
+    infos["data_is_apply_moving_average"] = eval(
+        data["model_configs"]["Artificial"]["data_configs"]["is_apply_moving_average"]
     )
     infos["data_window_size"] = data["model_configs"]["Artificial"]["data_configs"][
         "window_size"
@@ -55,25 +54,28 @@ def collect_artificial():
 
 
 with open("../doc/configure.json") as json_file:
-    data = json.load(json_file)
+    try:
+        data = json.load(json_file)
+        doc_folder = data["folder_configs"]["docs_path"]
+        data_path = data["folder_configs"]["data_path"]
+        model_path = (
+            data["folder_configs"]["data_path"] + data["folder_configs"]["model_path"]
+        )
+        model_path_remote = data["folder_configs"]["model_path_remote"]
+        glossary_file = (
+            data["folder_configs"]["docs_path"]
+            + data["folder_configs"]["glossary_file"]
+        )
 
-    doc_folder = data["folder_configs"]["docs_path"]
-    data_path = data["folder_configs"]["data_path"]
-    model_path = (
-        data["folder_configs"]["data_path"] + data["folder_configs"]["model_path"]
-    )
-    model_path_remote = data["folder_configs"]["model_path_remote"]
+        model_type = data["model_configs"]["type_used"]
+        model_subtype = data["model_configs"][model_type]["model"]
+        model_is_predicting = eval(data["model_configs"]["is_predicting"])
 
-    glossary_file = (
-        data["folder_configs"]["docs_path"] + data["folder_configs"]["glossary_file"]
-    )
+        model_infos = getattr(sys.modules[__name__], f"collect_{model_type}")()
+        logger.debug_log(
+            "configs_manner.py", "loading configurations", "Configurations loaded"
+        )
 
-    model_type = data["model_configs"]["type_used"]
-    model_subtype = data["model_configs"][model_type]["model"]
+    except Exception as e:
+        logger.error_log("configs_manner.py", "loading configurations", f"Error: {e}.")
 
-    if model_type == model_enum.Model.ARTIFICIAL.value:
-        model_infos = collect_artificial()
-    if model_type == model_enum.Model.EPIDEMIOLOGICAL.value:
-        model_infos = collect_epidemiological()
-    if model_type == model_enum.Model.AUTOREGRESSIVE.value:
-        model_infos = collect_autoregressive()

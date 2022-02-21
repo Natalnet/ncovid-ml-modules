@@ -9,7 +9,6 @@ exec(
     f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
 )
 
-
 class PredictorConstructor:
     def __init__(self, path, repo=None, feature=None, begin=None, end=None):
         """Predictor designed to forecast values through trained models.
@@ -38,7 +37,7 @@ class PredictorConstructor:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
-
+            
     def __get_model_obj(self, path):
         model = "Model" + str(configs_manner.model_subtype.upper())
         return getattr(model_manner, model)(path)
@@ -50,7 +49,7 @@ class PredictorConstructor:
 
     def __data_collector(self, path, repo=None, feature=None, begin=None, end=None):
         data_constructor = data_manner.DataConstructor(is_predicting=True)
-        data_collected = data_constructor.collect_dataframe(
+        data_collected = data_constructor.collect_to_predict(
             path, repo, feature, begin, end
         )
         return data_constructor.build_test(data_collected)
@@ -66,8 +65,8 @@ class PredictorConstructor:
         """
         data = data_to_predict if data_to_predict is not None else self.input_data
         try:
-            y_hat, rmse = self.model.predicting(data)
-            return self.__list_to_string(y_hat.reshape(-1)), rmse
+            y_hat = self.model.predicting(data)
+            return self.__list_to_string(y_hat[0].reshape(-1))
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
@@ -84,4 +83,5 @@ class PredictorConstructor:
                     "prediction": str(value),
                 }
             )
+            
         return str(returned_dictionaty)

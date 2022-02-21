@@ -6,11 +6,12 @@
     "docs_path": "../doc/",
     "data_path": "../dbs/",
     "model_path": "fitted_model/",
-    "model_path_remote": "https://raw.githubusercontent.com/EmersonVilar/machine-learning_Lesson07/master/",
+    "model_path_remote": "https://",
     "glossary_file": "glossary.json"
   },
   "model_configs": {
     "type_used": "Artificial",
+    "is_predicting": "False",
     "Autoregressive": {
       "model": "arima",
       "p": 1,
@@ -28,16 +29,16 @@
     "Artificial": {
       "model": "lstm",
       "nodes": 350,
-      "epochs": 200,
-      "dropout": 0.15,
+      "epochs": 250,
+      "dropout": 0.1,
       "batch_size": 64,
       "earlystop": 75,
       "is_output_in_input": "True",
-      "is_predicting": "False",
       "data_configs": {
         "is_accumulated_values": "False",
+        "is_apply_moving_average": "True",
         "window_size": 7,
-        "data_test_size_in_days": 42,
+        "data_test_size_in_days": 35,
         "type_norm": ""
       }
     }

@@ -7,6 +7,7 @@ import predictor_manner
 
 @app.route("/lstm/repo/<repo>/path/<path>/feature/<feature>/begin/<begin>/end/<end>/", methods=["GET"])
 def lstm(repo, path, feature, begin, end):
+
     predictor_obj = predictor_manner.PredictorConstructor(path, repo, feature, begin, end)
     response = predictor_obj.predict()
     response_json = jsonify(response)
