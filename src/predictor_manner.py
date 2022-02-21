@@ -9,6 +9,7 @@ exec(
     f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
 )
 
+
 class PredictorConstructor:
     def __init__(self, path, repo=None, feature=None, begin=None, end=None):
         """Predictor designed to forecast values through trained models.
@@ -37,11 +38,11 @@ class PredictorConstructor:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
-            
+
     def __get_model_obj(self, path):
         model = "Model" + str(configs_manner.model_subtype.upper())
         return getattr(model_manner, model)(path)
-    
+
     def __model_assemble(self, path):
         model_obj = self.__get_model_obj(path)
         model_obj.loading()
@@ -66,14 +67,14 @@ class PredictorConstructor:
         data = data_to_predict if data_to_predict is not None else self.input_data
         try:
             y_hat = self.model.predicting(data)
-            return self.__list_to_string(y_hat[0].reshape(-1))
+            return y_hat.reshape(-1)
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
             raise
 
-    def __list_to_string(self, y_hat):
+    def predictions_to_weboutput(self, y_hat):
         period = pd.date_range(self.begin, self.end)
         returned_dictionaty = list()
         for date, value in zip(period, y_hat):
@@ -83,5 +84,5 @@ class PredictorConstructor:
                     "prediction": str(value),
                 }
             )
-            
+
         return str(returned_dictionaty)
