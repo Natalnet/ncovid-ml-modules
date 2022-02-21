@@ -41,6 +41,10 @@ pip install -r requirements.txt
 * [docs](src/docs/) : contains documentation of the project.
 * [jupyter-notebook](src/jupyter-notebook/) : contains jupyter notebooks evaluation and modeling experimentation.
 
+
+## Usage
+
+
 ## Stakeholders
 > People involved in this project
 
