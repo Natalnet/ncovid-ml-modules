@@ -3,7 +3,13 @@ from data_manner import Train, Test
 
 
 class Evaluator:
-    def __init__(self, model=None, data_train=None, data_test=None, n_repeat=1):
+    def __init__(
+        self,
+        model=None,
+        data_train: list = None,
+        data_test: list = None,
+        n_repeat: int = 1,
+    ):
         self._data_train = data_train
         self._data_test = data_test
         self.n_repeat = n_repeat
@@ -48,7 +54,9 @@ class Evaluator:
     def clean_models(self):
         self._models = list()
 
-    def evaluate_model(self, model=None, data_train=None, data_test=None):
+    def evaluate_model(
+        self, model=None, data_train: list = None, data_test: list = None
+    ):
         """Evaluate model over train and test
 
         Args:
@@ -59,6 +67,7 @@ class Evaluator:
         Returns:
             y_hats, rmses: predictions and rmses
         """
+        from copy import copy
 
         if data_train is None:
             data_train = self.data_train
@@ -68,31 +77,28 @@ class Evaluator:
             model = self._model
 
         # walk-forward validation over each week
-        history = data_train
+        history = copy(data_train)
         history.y_hat = list()
         history.rmse = list()
-        y = list()
-        for idx, num in enumerate(data_test.x):
-            y.append(history.y)
-            # predict the week
-            yhat, rmse, score, score_test, score_train = model.predicting(history)
-            # store the predictions
+        for idx in range(len(data_test.x) + 1):
+            yhat = model.predicting(history)
+            rmse = model.calculate_rmse(history.y, yhat)
             history.y_hat.append(yhat)
             history.rmse.append(rmse)
+
             # get real observation and add to history for predicting the next week
             history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
             history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
-            #print(np.array(history.rmse[0]).shape)
-        # evaluate predictions days for each week
-        # predictions = np.array(predictions)
-        y = y[-1].reshape(y[-1].shape[0], y[-1].shape[1])[:, :1]
-        history.y_hat = history.y_hat[-1].reshape(
-            history.y_hat[-1].shape[0], history.y_hat[-1].shape[1]
-        )[:, :1]
-        return y, history.y_hat, history.rmse, score, score_test, score_train
+
+        return history
 
     def evaluate_model_n_times(
-        self, model=None, train=None, test=None, n_repeat=None, verbose=0
+        self,
+        model=None,
+        train: list = None,
+        test: list = None,
+        n_repeat: int = 1,
+        verbose=0,
     ):
         """
         Fit and Evaluate a single model over train and test multiple times
@@ -127,7 +133,12 @@ class Evaluator:
         return list(zip(regressor_list, y_list, y_hat_list, rmse_list))
 
     def evaluate_n_models_n_times(
-        self, list_models=None, train=None, test=None, n_repeat=1, verbose=0
+        self,
+        list_models: list = None,
+        train: list = None,
+        test: list = None,
+        n_repeat: int = 1,
+        verbose=0,
     ):
         """
         Fit and Evaluate multiple models over train and test multiple times

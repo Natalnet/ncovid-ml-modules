@@ -27,3 +27,4 @@ def error_log(cls, method, message):
         message (str): message describing some fact to save.
     """
     logging.error("ERROR cls:{} - {} - {}".format(cls, method, message))
+

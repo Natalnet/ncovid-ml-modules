@@ -56,6 +56,7 @@ def collect_Artificial():
 with open("../doc/configure.json") as json_file:
     try:
         data = json.load(json_file)
+
         doc_folder = data["folder_configs"]["docs_path"]
         data_path = data["folder_configs"]["data_path"]
         model_path = (
@@ -78,4 +79,3 @@ with open("../doc/configure.json") as json_file:
 
     except Exception as e:
         logger.error_log("configs_manner.py", "loading configurations", f"Error: {e}.")
-

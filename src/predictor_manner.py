@@ -9,6 +9,7 @@ exec(
     f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
 )
 
+
 class PredictorConstructor:
     def __init__(self, path, repo=None, feature=None, begin=None, end=None):
         """Predictor designed to forecast values through trained models.
@@ -37,11 +38,11 @@ class PredictorConstructor:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
             )
-            
+
     def __get_model_obj(self, path):
         model = "Model" + str(configs_manner.model_subtype.upper())
         return getattr(model_manner, model)(path)
-    
+
     def __model_assemble(self, path):
         model_obj = self.__get_model_obj(path)
         model_obj.loading()
@@ -83,5 +84,5 @@ class PredictorConstructor:
                     "prediction": str(value),
                 }
             )
-            
+
         return str(returned_dictionaty)

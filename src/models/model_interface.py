@@ -35,3 +35,4 @@ class ModelInterface:
     @abstractmethod
     def predicting(self, data):
         pass
+
