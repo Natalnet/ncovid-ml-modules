@@ -70,5 +70,5 @@ MIT
    [Matplotlib]: <https://matplotlib.org/>
 
    [DAVI_ORCID ]: <>
-   [DUNFREY_ORCID]: <orcid.org/0000-0002-2401-6985>
+   [DUNFREY_ORCID]: <https://orcid.org/0000-0002-2401-6985>
    [EMERSON_ORCID]: <>
