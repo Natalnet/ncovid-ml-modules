@@ -1,12 +1,14 @@
 import io, requests, h5py
+from typing import Tuple
+
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping
 from math import sqrt
 from sklearn.metrics import mean_squared_error
-from data_manner import Test
 
 import logger
 import configs_manner
+from data_manner import Test
 from models.model_interface import ModelInterface
 
 
@@ -20,9 +22,6 @@ class ModelArtificalInterface(ModelInterface):
         self.is_output_in_input = configs_manner.model_infos["model_is_output_in_input"]
         self.is_predicting = configs_manner.model_is_predicting
         self.data_window_size = configs_manner.model_infos["data_window_size"]
-        self.data_test_size_in_days = configs_manner.model_infos[
-            "data_test_size_in_days"
-        ]
         self.earlystop = EarlyStopping(
             monitor="loss",
             mode="min",
@@ -86,7 +85,7 @@ class ModelArtificalInterface(ModelInterface):
                 self.__class__.__name__, self.loading.__name__, "Model loaded"
             )
 
-    def fiting(self, x: list, y: list, verbose: int = 0):
+    def fiting(self, x: list, y: list, verbose: int = 0) -> bool:
         """Fit model based on Train data
 
         Args:
@@ -116,7 +115,7 @@ class ModelArtificalInterface(ModelInterface):
             )
             raise
 
-    def predicting(self, data: Test):
+    def predicting(self, data: Test) -> list:
         """Make predictions (often test data)
 
         Args:
@@ -127,36 +126,15 @@ class ModelArtificalInterface(ModelInterface):
         """
         yhat = self.model.predict(data.x, verbose=0)
 
-        # calculate overall RMSE
-        s = 0
-        s_test = 0
-        s_train = 0
-        n_test = self.data_test_size_in_days
-        n_input = self.data_window_size
-        for row in range(data.y.shape[0]):
-            for col in range(data.y.shape[1]):
-                # geral (treino + test)
-                s += (data.y[row, col] - yhat[row, col]) ** 2
-                # só teste
-                if row > data.y.shape[0] - (n_test / n_input):
-                    s_test += (data.y[row, col] - yhat[row, col]) ** 2
-                # só treino
-                if row < data.y.shape[0] - (n_test / n_input):
-                    s_train += (data.y[row, col] - yhat[row, col]) ** 2
-        # rmse geral (treino + teste)
-        score = sqrt(s / data.y.shape[1])
-        # rmse para dados de teste (test)
-        score_test = sqrt(s_test / data.y.shape[1])
-        # rmse para dados de treino (train)
-        score_train = sqrt(s_train / data.y.shape[1])
-
         logger.debug_log(
             self.__class__.__name__, self.predicting.__name__, "Data predicted"
         )
 
         return yhat
 
-    def calculate_rmse(self, y_orig: list, y_hat: list):
+    def calculate_rmse(
+        self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    ) -> list or Tuple[list, list]:
         if len(y_orig) != len(y_hat):
             logger.error_log(
                 self.__class__.__name__,

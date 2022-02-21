@@ -75,4 +75,3 @@ class ModelLSTM(ModelArtificalInterface):
             f"\n\tfeatures: { self.n_features }"
             f"\n\tdropout: {self.dropout}"
         )
-

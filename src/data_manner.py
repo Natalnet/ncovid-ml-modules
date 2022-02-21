@@ -1,14 +1,14 @@
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 
 import logger
 import configs_manner
 
-import datetime
-
 
 class DataConstructor:
-    def __init__(self, is_predicting: bool = False):
+    def __init__(self, is_predicting: bool = False) -> "DataConstructor":
         """Data manager designed to collect and prepare data for the project.
         More details look up at doc/configure.json file.
         
@@ -41,7 +41,7 @@ class DataConstructor:
         self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
         self.type_norm = configs_manner.model_infos["data_type_norm"]
 
-    def build_train_test(self, data: list):
+    def build_train_test(self, data: np.array | list) -> Tuple["Train", "Test"]:
         """To build train and test data for training and predicting.
 
         Args:
@@ -60,7 +60,7 @@ class DataConstructor:
         data_train, data_test = self.split_data_train_test(data_t)
         return self.build_train(data_train), self.build_test(data_test)
 
-    def build_train(self, data: list):
+    def build_train(self, data: np.array | list) -> "Train":
         """To build train data for training.
 
         Args:
@@ -69,7 +69,7 @@ class DataConstructor:
             The second dimension represents the time-serie of each dimension. 
 
         Returns:
-            Test: Test data type 
+            Train: Train data type 
         """
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_train.__name__, "Format data",
@@ -84,7 +84,7 @@ class DataConstructor:
             )
             raise
 
-    def build_test(self, data: list):
+    def build_test(self, data: np.array | list) -> "Test":
         """To build test data for predicting.
 
         Args:
@@ -93,7 +93,7 @@ class DataConstructor:
             The second dimension represents the time-serie of each dimension. 
 
         Returns:
-            Train: Train data type 
+            Test: Test data type 
         """
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_test.__name__, "Format data",
@@ -129,7 +129,7 @@ class DataConstructor:
     def __transpose_data(self, data):
         return np.array(data).T
 
-    def split_data_train_test(self, data: list):
+    def split_data_train_test(self, data: list) -> Tuple[list, list]:
         """Split a numpy bi-dimensional array in train and test.
 
         Args:
@@ -156,7 +156,7 @@ class DataConstructor:
         feature: str = None,
         begin: str = None,
         end: str = None,
-    ):
+    ) -> np.array | list:
         """Collect a dataframe from the repository or web
         
         Args:
@@ -171,7 +171,7 @@ class DataConstructor:
             dataframe: Pandas dataframe
         """
 
-        def read_file(file_name: str):
+        def read_file(file_name):
             import pandas as pd
 
             return pd.read_csv(file_name, parse_dates=["date"], index_col="date")
@@ -227,7 +227,7 @@ class DataConstructor:
             # TO DO
             pass
 
-        def pipeline(self, dataframe: pd.DataFrame):
+        def pipeline(self, dataframe: pd.DataFrame) -> list:
             """Auto and basic pipeline applied to the data
             1- Resolve cumulativa columns
             2- Remove columns with any nan values
@@ -267,14 +267,14 @@ class DataConstructor:
             )
             return dataframe_as_list
 
-        def solve_cumulative(self, dataframe: pd.DataFrame):
+        def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             if configs_manner.model_infos["data_is_accumulated_values"]:
                 return dataframe.diff(
                     configs_manner.model_infos["data_window_size"]
                 ).dropna()
             return dataframe
 
-        def moving_average(self, dataframe: pd.DataFrame):
+        def moving_average(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             if configs_manner.model_infos["data_is_apply_moving_average"]:
                 return (
                     dataframe.rolling(configs_manner.model_infos["data_window_size"])
@@ -284,7 +284,7 @@ class DataConstructor:
                 )
             return dataframe
 
-        def select_columns_with_values(self, dataframe: pd.DataFrame):
+        def select_columns_with_values(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             def is_different_values(s):
                 a = s.to_numpy()  # s.values (pandas<0.24)
                 return (a[0] == a).all()
@@ -295,32 +295,11 @@ class DataConstructor:
             ]
             return dataframe.loc[:, column_with_values]
 
-        def remove_na_values(self, dataframe: pd.DataFrame):
+        def remove_na_values(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             return dataframe.dropna()
 
-        def convert_dataframe_to_list(self, dataframe: pd.DataFrame):
+        def convert_dataframe_to_list(self, dataframe: pd.DataFrame) -> list:
             return [dataframe[col].values for col in dataframe.columns]
-
-    def collect_to_predict(self, path, repo=None, feature=None, begin=None, end=None):
-        end = self.time_skip_for_predict(begin, end)
-        begin = self.time_delay(begin)
-        return self.collect_dataframe(path, repo, feature, begin, end)
-
-    def time_skip_for_predict(self, begin, end):
-        start_date = datetime.datetime.strptime(begin, "%Y-%m-%d")
-        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
-        days_num = (end_date - start_date + datetime.timedelta(days=1)).days
-        days_offset = days_num + (self.window_size - days_num % self.window_size)
-        end_date = end_date + datetime.timedelta(
-            days=days_offset - days_num + self.window_size
-        )
-        return end_date.strftime("%Y-%m-%d")
-
-    def time_delay(self, begin):
-        start_date = datetime.datetime.strptime(begin, "%Y-%m-%d") - datetime.timedelta(
-            days=self.window_size
-        )
-        return start_date.strftime("%Y-%m-%d")
 
 
 class Data:
