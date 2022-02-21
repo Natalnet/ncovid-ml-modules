@@ -1,9 +1,10 @@
 # NCovid ML Modules
-NCovid ML Modules is a standalone library for machine learning applications, compatible for receiving requests as web-point.
+NCovid ML Modules is a standalone library for machine learning applications, compatible with receiving requests as web-point.
 
-> The NCovid-ml-modules design goal is improving formatting and facilittating is to make ml pipelines readable
-> and optimized. The idea is that a time-series dataframe or a table data should be preprocessed and submitted to the use
-> of many applications to data regression problems.
+> The NCovid-ml-modules design goal is improving formatting and facilitating is
+> to make ml pipelines readable and optimized. The idea is that a time-series dataframe 
+> or a table data should be preprocessed and submitted to the use of 
+> many applications to data regression problems.
 
 ## Tech
 NCovid ML Modules uses a number of open source projects to work properly:
@@ -22,8 +23,7 @@ This code runs on Python 3.7
 
 ### Prerequisites
 
-We have tested the library in Ubuntu 20.04, 19.04, 18.04 and 16.04, but it should be easy to compile in other platforms.
-
+We have tested the library in Ubuntu 20.04, 19.04, 18.04, and 16.04, but it should be easy to compile on other platforms.
 ### Libraries
 
 
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 >Project Folder Structure and Files
 
 * [src](src) : main Python package with source of the model.
-* [dbs](src/dbs/) : used as local path to store and load data and models.
+* [dbs](src/dbs/) : used as a local path to store and load data and models.
 * [docs](src/docs/) : contains documentation of the project.
 * [jupyter-notebook](src/jupyter-notebook/) : contains jupyter notebooks evaluation and modeling experimentation.
 
