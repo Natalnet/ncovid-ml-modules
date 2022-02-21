@@ -1,10 +1,7 @@
 # NCovid ML Modules
 NCovid ML Modules is a standalone library for machine learning applications, compatible with receiving requests as web-point.
 
-> The NCovid-ml-modules design goal is improving formatting and facilitating is
-> to make ml pipelines readable and optimized. The idea is that a time-series dataframe 
-> or a table data should be preprocessed and submitted to the use of 
-> many applications to data regression problems.
+> The NCovid-ml-modules design goal is improving formatting and facilitating to make machine learning pipelines readable and optimized. The main idea is to optimize the time-series data manipulation by preprocessed workflow and submit to the use of many applications to data regression problems. The library is based on OOP and multiple goals could be done such as preprocess data, models grid search, and evaluation.
 
 ## Tech
 NCovid ML Modules uses a number of open source projects to work properly:
