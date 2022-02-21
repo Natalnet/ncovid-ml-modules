@@ -4,6 +4,8 @@ import pandas as pd
 import logger
 import configs_manner
 
+import datetime
+
 
 class DataConstructor:
     def __init__(self, is_predicting: bool = False):
@@ -299,6 +301,27 @@ class DataConstructor:
         def convert_dataframe_to_list(self, dataframe: pd.DataFrame):
             return [dataframe[col].values for col in dataframe.columns]
 
+    def collect_to_predict(self, path, repo=None, feature=None, begin=None, end=None):
+        end = self.time_skip_for_predict(begin, end)
+        begin = self.time_delay(begin)
+        return self.collect_dataframe(path, repo, feature, begin, end)
+
+    def time_skip_for_predict(self, begin, end):
+        start_date = datetime.datetime.strptime(begin, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+        days_num = (end_date - start_date + datetime.timedelta(days=1)).days
+        days_offset = days_num + (self.window_size - days_num % self.window_size)
+        end_date = end_date + datetime.timedelta(
+            days=days_offset - days_num + self.window_size
+        )
+        return end_date.strftime("%Y-%m-%d")
+
+    def time_delay(self, begin):
+        start_date = datetime.datetime.strptime(begin, "%Y-%m-%d") - datetime.timedelta(
+            days=self.window_size
+        )
+        return start_date.strftime("%Y-%m-%d")
+
 
 class Data:
     def __init__(self, step_size: int = None, type_norm: str = None):
@@ -428,6 +451,8 @@ class Test(Data):
             if configs_manner.model_infos["model_is_output_in_input"]
             else data[:-1, :, 1:]
         )
+
+        configs_manner.model_infos["data_n_features"] = x.shape[-1]
 
         y = data[1:, :, :1]
         y = y.reshape((y.shape[0], y.shape[1], 1))

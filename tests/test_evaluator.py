@@ -1,4 +1,9 @@
+import sys
+
+sys.path.append("../src")
+
 import matplotlib.pyplot as plt
+import numpy as np
 from statistics import mean
 
 import data_manner
@@ -50,6 +55,8 @@ plt.show()
 
 plt.plot(ys, label="real", linewidth=1)
 plt.plot(y_hats, label="pred", linewidth=1)
+# plt.plot(np.array(rmses[0]), label='rmse 0')
+# plt.plot(np.array(rmses[1]), label='rmse 1')
 plt.legend(loc="best")
 plt.show()
 print()

@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../src")
+
 import pandas as pd
 from enums import feature_enum
 

@@ -56,7 +56,6 @@ def collect_Artificial():
 with open("../doc/configure.json") as json_file:
     try:
         data = json.load(json_file)
-
         doc_folder = data["folder_configs"]["docs_path"]
         data_path = data["folder_configs"]["data_path"]
         model_path = (
