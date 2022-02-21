@@ -196,7 +196,7 @@ class DataConstructor:
         preprocessor = self.Preprocessing()
         return preprocessor.pipeline(dataframe)
 
-    def __add_period(self, begin, end):
+    def __add_period(self, begin: str, end: str):
         import datetime
 
         DATE_FORMAT = "%Y-%m-%d"

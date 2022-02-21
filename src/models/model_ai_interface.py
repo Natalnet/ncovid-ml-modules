@@ -6,7 +6,6 @@ from tensorflow.keras.callbacks import EarlyStopping
 from math import sqrt
 from sklearn.metrics import mean_squared_error
 
-
 import logger
 import configs_manner
 from data_manner import Test

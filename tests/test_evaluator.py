@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../src")
 
 import matplotlib.pyplot as plt
@@ -33,9 +34,24 @@ lstm_model_local_2 = lstm_manner.ModelLSTM(path)
 lstm_model_local_2.loading()
 
 avaliador_modelo = evaluator_manner.Evaluator(lstm_model_local_2, train, test)
-ys, y_hats, rmses, score, score_test, score_train = avaliador_modelo.evaluate_model()
-#print(np.array(rmses).shape)
-print(score, score_test, score_train)
+history_eval = avaliador_modelo.evaluate_model()
+
+for in_list in history_eval.rmse:
+    print(mean(in_list))
+
+
+colors = ["r", "g", "b"]
+points = [".", "_", "o"]
+i = 0
+plt.legend(loc="best")
+for in_list in history_eval.y_hat:
+    plt.plot(
+        in_list.reshape(in_list.shape[0], in_list.shape[1])[:, :1],
+        marker=points[i],
+        color=colors[i],
+    )
+    i += 1
+plt.show()
 
 plt.plot(ys, label="real", linewidth=1)
 plt.plot(y_hats, label="pred", linewidth=1)
@@ -43,3 +59,4 @@ plt.plot(y_hats, label="pred", linewidth=1)
 # plt.plot(np.array(rmses[1]), label='rmse 1')
 plt.legend(loc="best")
 plt.show()
+print()
