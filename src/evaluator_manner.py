@@ -1,6 +1,8 @@
 import numpy as np
-from data_manner import Train, Test
-
+from data_manner import Train, Test, Data
+import configs_manner
+from statistics import mean
+from math import sqrt
 
 class Evaluator:
     def __init__(
@@ -54,44 +56,81 @@ class Evaluator:
     def clean_models(self):
         self._models = list()
 
-    def evaluate_model(
-        self, model=None, data_train: list = None, data_test: list = None
-    ):
-        """Evaluate model over train and test
+    # def evaluate_model(
+    #     self, model=None, data_train: list = None, data_test: list = None
+    # ):
+    #     """Evaluate model over train and test
 
-        Args:
-            model (model, optional): model trained. Defaults to None.
-            data_train (Train, optional): Data train to be trained. Defaults to None.
-            data_test (Test, optional): Data test to be evaluated. Defaults to None.
+    #     Args:
+    #         model (model, optional): model trained. Defaults to None.
+    #         data_train (Train, optional): Data train to be trained. Defaults to None.
+    #         data_test (Test, optional): Data test to be evaluated. Defaults to None.
 
-        Returns:
-            y_hats, rmses: predictions and rmses
-        """
-        from copy import copy
+    #     Returns:
+    #         y_hats, rmses: predictions and rmses
+    #     """
+    #     from copy import copy
 
-        if data_train is None:
-            data_train = self.data_train
-        if data_test is None:
-            data_test = self.data_test
-        if model is None:
-            model = self._model
+    #     if data_train is None:
+    #         data_train = self.data_train
+    #     if data_test is None:
+    #         data_test = self.data_test
+    #     if model is None:
+    #         model = self._model
 
-        # walk-forward validation over each week
-        history = copy(data_train)
-        history.y_hat = list()
-        history.rmse = list()
-        for idx in range(len(data_test.x) + 1):
-            yhat = model.predicting(history)
-            rmse = model.calculate_rmse(history.y, yhat)
-            history.y_hat.append(yhat)
-            history.rmse.append(rmse)
+    #     # walk-forward validation over each week
+    #     history = copy(data_train)
+    #     history.y_hat = list()
+    #     history.rmse = list()
+    #     for idx in range(len(data_test.x) + 1):
+    #         yhat = model.predicting(history)
+    #         rmse = model.calculate_rmse(history.y, yhat)
+    #         history.y_hat.append(yhat)
+    #         history.rmse.append(rmse)
 
-            # get real observation and add to history for predicting the next week
-            history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
-            history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
+    #         # get real observation and add to history for predicting the next week
+    #         history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
+    #         history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
 
-        return history
+    #     return history
+        
+    def _evaluate_model_rmse(self, model, data: "Data") -> dict:
+        test_period = int(configs_manner.model_infos['data_test_size_in_days']/configs_manner.model_infos['data_window_size'])
+        
+        yhat = model.predicting(data.x) 
+        rmse = model.calculate_rmse(data.y, yhat)
+                
+        rmse_dict = {"rmse_total": sqrt(mean([r**2 for r in rmse])),
+                "rmse_train": sqrt(mean([r**2 for r in rmse[:test_period]])), 
+                "rmse_test": sqrt(mean([r**2 for r in rmse[:-test_period]]))
+                }
+        
+        return rmse_dict
+    
+    def _evaluate_model_mse(self, model, data: "Data") -> dict:
+        test_period = int(configs_manner.model_infos['data_test_size_in_days']/configs_manner.model_infos['data_window_size'])
+        
+        yhat = model.predicting(data.x) 
+        mse = model.calculate_mse(data.y, yhat)
+                
+        mse_dict = {"mse_total": mean(mse),
+                "mse_train": mean(mse[:test_period]), 
+                "mse_test": mean(mse[:-test_period])
+                }
+        
+        return mse_dict
+    
+    def evaluate_model(self, model, data: "Data", metrics: list = None) -> dict:
+        evaluated_dict = {}
+        local_metrics = ['rmse', 'mse']
+        if metrics is not None:
+            local_metrics = metrics
 
+        for metric in local_metrics:
+            evaluated_dict[metric] = getattr(self, f"_evaluate_model_{metric}")(model, data)
+            
+        return evaluated_dict
+            
     def evaluate_model_n_times(
         self,
         model=None,

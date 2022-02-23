@@ -41,7 +41,7 @@ class DataConstructor:
         self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
         self.type_norm = configs_manner.model_infos["data_type_norm"]
 
-    def build_train_test(self, data: np.array | list) -> Tuple["Train", "Test"]:
+    def build_train_test(self, data: np.array or list) -> Tuple["Train", "Test"]:
         """To build train and test data for training and predicting.
 
         Args:
@@ -60,7 +60,7 @@ class DataConstructor:
         data_train, data_test = self.split_data_train_test(data_t)
         return self.build_train(data_train), self.build_test(data_test)
 
-    def build_train(self, data: np.array | list) -> "Train":
+    def build_train(self, data: np.array or list) -> "Train":
         """To build train data for training.
 
         Args:
@@ -84,7 +84,7 @@ class DataConstructor:
             )
             raise
 
-    def build_test(self, data: np.array | list) -> "Test":
+    def build_test(self, data: np.array or list) -> "Test":
         """To build test data for predicting.
 
         Args:
@@ -156,7 +156,7 @@ class DataConstructor:
         feature: str = None,
         begin: str = None,
         end: str = None,
-    ) -> np.array | list:
+    ) -> np.array or list:
         """Collect a dataframe from the repository or web
         
         Args:

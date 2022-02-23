@@ -124,7 +124,7 @@ class ModelArtificalInterface(ModelInterface):
         Returns:
             Test.y_hat and Test.rmse: predictions and its rmse
         """
-        yhat = self.model.predict(data.x, verbose=0)
+        yhat = self.model.predict(data, verbose=0)
 
         logger.debug_log(
             self.__class__.__name__, self.predicting.__name__, "Data predicted"
@@ -153,3 +153,36 @@ class ModelArtificalInterface(ModelInterface):
         )
 
         return rmse
+
+    def calculate_mse(
+        self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    ) -> list or Tuple[list, list]:
+        if len(y_orig) != len(y_hat):
+            logger.error_log(
+                self.__class__.__name__,
+                self.calculate_rmse.__name__,
+                "The list must to have same size",
+            )
+            return None
+
+        mse = [
+            mean_squared_error(y_hat[idx], y_orig[idx])
+            for idx, _ in enumerate(y_orig)
+        ]
+
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "MSE calculated"
+        )
+        return mse
+        
+    def calculate_mae():
+        pass
+        
+    def calculate_R2():
+        pass
+    
+    def calculate_rse():
+        pass
+    
+    def calculate_nrsme():
+        pass
