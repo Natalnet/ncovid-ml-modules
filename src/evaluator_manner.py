@@ -1,24 +1,30 @@
 import numpy as np
 from data_manner import Train, Test, Data
+from models.model_interface import ModelInterface
 import configs_manner
 from statistics import mean
 from math import sqrt
+import logger
+
+exec(
+    f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
+)
 
 class Evaluator:
     def __init__(
         self,
-        model=None,
-        data_train: list = None,
-        data_test: list = None,
+        model: "ModelInterface" or list or str = None,
+        data_train: "Train" = None,
+        all_data: "Data" = None,
         n_repeat: int = 1,
+        save: bool = False,
     ):
         self._data_train = data_train
-        self._data_test = data_test
-        self.n_repeat = n_repeat
+        self._all_data = all_data
+        self._n_repeat = n_repeat
         self._model = model
         self._models = list()
-        if model is not None:
-            self._models.append(model)
+        self._save = save
 
     @property
     def data_train(self):
@@ -120,7 +126,30 @@ class Evaluator:
         
         return mse_dict
     
-    def evaluate_model(self, model, data: "Data", metrics: list = None) -> dict:
+    def evaluate_model(
+        self, 
+        model: "ModelInterface" = None, 
+        all_data: "Data" = None, 
+        metrics: list = None
+        )-> dict:
+        """Evaluate model over train and test
+
+         Args:
+             model (ModelInterface, optional): model trained. Defaults to None.
+             data (Data, optional): Data to be evaluated. Defaults to None.
+             metrics (list, optional): list of metrics to be returned
+
+         Returns:
+             evaluated_dict: returned metrics
+         """
+        from copy import copy
+
+        if all_data is None:
+            all_data = self._all_data
+        if model is None:
+            model = self._model
+
+        data = copy(all_data)
         evaluated_dict = {}
         local_metrics = ['rmse', 'mse']
         if metrics is not None:
@@ -133,12 +162,12 @@ class Evaluator:
             
     def evaluate_model_n_times(
         self,
-        model=None,
-        train: list = None,
-        test: list = None,
+        model_list: list or str = None,
+        train: "Train" = None,
+        all_data: "Data" = None,
         n_repeat: int = 1,
         verbose=0,
-    ):
+    ) -> dict:
         """
         Fit and Evaluate a single model over train and test multiple times
         :param model: Specify model to training and evaluate
@@ -148,29 +177,43 @@ class Evaluator:
         :param verbose: Specify training should be verbose or silent
         :return: regressor_list with predictions and rmses for unique model
         """
+        local_model_list = model_list
+        if (local_model_list is None) and (type(self._model) is str or list):
+            local_model_list = self._model
+            
+        if type(local_model_list) is str:
+            path = local_model_list
+            model = "Model" + str(configs_manner.model_subtype.upper())
+            local_model_list = [getattr(model_manner, model)(path) for _ in range(n_repeat)]   
+        elif type(local_model_list) is list:
+            local_model_list = local_model_list
+        else:
+            logger.error_log(
+                    self.__class__.__name__,
+                    self.evaluate_model_n_times.__name__,
+                    "None list or path was given in: {}".format(self.__str__),
+                )
+            raise Exception("None list or path was given")
+        
+        from copy import copy
+
         if train is None:
-            train = self.data_train
-        if test is None:
-            test = self.data_test
-        if model is None:
-            model = self._model
+            train = self._data_train
+        if all_data is None:
+            all_data = self._all_data
         if n_repeat is None:
-            n_repeat = self.n_repeat
-
-        regressor_list = list()
-        y_list = list()
-        y_hat_list = list()
-        rmse_list = list()
-        for idx, num in enumerate(n_repeat):
-            regressor_list.append(model)
-            regressor_list[idx].fiting(train.x, train.y, verbose)
-            y, y_hat, rmse = self.evaluate_model(model, train, test)
-            y_list.append(y)
-            y_hat_list.append(y_hat)
-            rmse_list.append(rmse)
-
-        return list(zip(regressor_list, y_list, y_hat_list, rmse_list))
-
+            n_repeat = self._n_repeat
+        
+        train_data = copy(train)
+        model_dict ={}
+        
+        for idx, model in enumerate(local_model_list):
+            model.creating()
+            model.fiting(train_data.x, train_data.y, verbose=verbose)
+            model_dict["n_time_" + str(idx)] = self.evaluate_model(model, all_data)
+            
+        return model_dict
+        
     def evaluate_n_models_n_times(
         self,
         list_models: list = None,
@@ -178,7 +221,7 @@ class Evaluator:
         test: list = None,
         n_repeat: int = 1,
         verbose=0,
-    ):
+    ) -> dict:
         """
         Fit and Evaluate multiple models over train and test multiple times
         :param list_models: Specify model list to training and evaluate
