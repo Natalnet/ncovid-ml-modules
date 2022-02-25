@@ -36,12 +36,13 @@ n_repeat = 2
 model_list = [lstm_manner.ModelLSTM(path) for _ in range(n_repeat)]
 
 evaluator = evaluator_manner.Evaluator()
-evaluated = evaluator.evaluate_model_n_times(model_list, train, all_data, n_repeat=n_repeat)
+evaluated = evaluator.evaluate_model_n_times(model_list, train, all_data, n_repeat=n_repeat, save=True)
 
 print("\n")
 print("WAY 1", evaluated)
 print("\n")
-# Or do this way
+    
+#Or do this way
 
 # where 'path' is required to load the model_manner from the configure.json
 evaluator = evaluator_manner.Evaluator()
