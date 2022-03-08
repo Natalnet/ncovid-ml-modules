@@ -28,8 +28,8 @@
     },
     "Artificial": {
       "model": "lstm",
-      "nodes": 350,
-      "epochs": 250,
+      "nodes": 300,
+      "epochs": 300,
       "dropout": 0.1,
       "batch_size": 64,
       "earlystop": 75,
@@ -38,7 +38,7 @@
         "is_accumulated_values": "False",
         "is_apply_moving_average": "True",
         "window_size": 7,
-        "data_test_size_in_days": 35,
+        "data_test_size_in_days": 15,
         "type_norm": ""
       }
     }

@@ -36,12 +36,12 @@ class Evaluator:
         self._data_train = train
 
     @property
-    def data_test(self):
-        return self._data_test
+    def all_data(self):
+        return self._all_data
 
-    @data_test.setter
+    @all_data.setter
     def data_test(self, test):
-        self._data_test = test
+        self._all_data = test
 
     @property
     def model(self):
@@ -63,49 +63,183 @@ class Evaluator:
     def clean_models(self):
         self._models = list()
 
-    # def evaluate_model(
-    #     self, model=None, data_train: list = None, data_test: list = None
-    # ):
-    #     """Evaluate model over train and test
+    def evaluate_model(
+        self, 
+        model: "ModelInterface" = None, 
+        all_data: "Data" = None, 
+        metrics: list = None,
+        save: bool = False,
+        )-> dict:
+        """Evaluate model over train and test
 
-    #     Args:
-    #         model (model, optional): model trained. Defaults to None.
-    #         data_train (Train, optional): Data train to be trained. Defaults to None.
-    #         data_test (Test, optional): Data test to be evaluated. Defaults to None.
+         Args:
+             model (ModelInterface, optional): model trained. Defaults to None.
+             all_data (Data, optional): Data to be evaluated. Defaults to None.
+             metrics (list, optional): list of metrics to be returned
 
-    #     Returns:
-    #         y_hats, rmses: predictions and rmses
-    #     """
-    #     from copy import copy
+         Returns:
+             evaluated_dict: returned metrics
+         """
+        from copy import copy
 
-    #     if data_train is None:
-    #         data_train = self.data_train
-    #     if data_test is None:
-    #         data_test = self.data_test
-    #     if model is None:
-    #         model = self._model
+        if all_data is None:
+            all_data = self._all_data
+        if model is None:
+            model = self._model
 
-    #     # walk-forward validation over each week
-    #     history = copy(data_train)
-    #     history.y_hat = list()
-    #     history.rmse = list()
-    #     for idx in range(len(data_test.x) + 1):
-    #         yhat = model.predicting(history)
-    #         rmse = model.calculate_rmse(history.y, yhat)
-    #         history.y_hat.append(yhat)
-    #         history.rmse.append(rmse)
-
-    #         # get real observation and add to history for predicting the next week
-    #         history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
-    #         history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
-
-    #     return history
+        data = copy(all_data)
+        evaluated_dict = {}
+        local_metrics = ['rmse', 'mse']
         
+        if metrics is not None:
+            local_metrics = metrics
+
+        for metric in local_metrics:
+            evaluated_dict[metric] = getattr(self, f"_evaluate_model_{metric}")(model, data)
+        
+        if save:
+            self.__save_as_json(evaluated_dict)
+            
+        return evaluated_dict
+            
+    def evaluate_model_n_times(
+        self,
+        model_list: list or str = None,
+        train: "Train" = None,
+        all_data: "Data" = None,
+        n_repeat: int = 1,
+        verbose=0,
+        save: bool = False,
+    ) -> dict:
+        """Fits and evaluates a sigle model configuration for N times.
+
+        Args:
+            model_list (list or str, optional): List of N models with the same configuration. Defaults to None.
+            train (Train, optional): Data to train the models. Defaults to None.
+            all_data (Data, optional): Data to evaluate the models. Defaults to None.
+            n_repeat (int, optional): N value to repeat the evaluation. Defaults to 1.
+            verbose (int, optional): Specify training should be verbose or silent. Defaults to 0.
+            save (bool, optional): Flag to save or not a file with the evaluation. Defaults to False.
+
+        Raises:
+            Exception: None list or path was given.
+
+        Returns:
+            dict: returned evaluated metric for each model.
+        """
+        if train is None:
+            train = self._data_train
+        if all_data is None:
+            all_data = self._all_data
+        if n_repeat is None:
+            n_repeat = self._n_repeat
+        
+        local_model_list = model_list
+        
+        if ( local_model_list is None ) and ( type(self._model) is str or list ):
+            local_model_list = self._model
+            
+        if type(local_model_list) is str:
+            local_model_list = self.__n_times_model_generate(local_model_list, n_repeat=n_repeat)
+
+        elif type(local_model_list) is list:
+            local_model_list = local_model_list
+        else:
+            logger.error_log(
+                    self.__class__.__name__,
+                    self.evaluate_model_n_times.__name__,
+                    "None list or path was given in: {}".format(self.__str__),
+                )
+            raise Exception("None list or path was given")
+        
+        from copy import copy
+
+        train_data = copy(train)
+
+        reuturned_params_list = ["nodes", "epochs", "dropout", "batch_size"]
+        params_dict = { param: self.__get_model_param_value(param) for param in reuturned_params_list}
+        
+        model_dict = {}
+        model_dict["params"] = params_dict
+        
+        each_model_evaluate = []
+        for idx, model in enumerate(local_model_list):
+            model.creating()
+            model.fiting(train_data.x, train_data.y, verbose=verbose)
+            each_model_evaluate.append({"model": idx, "metrics" : self.evaluate_model(model, all_data)})
+        
+        model_dict["models"] = each_model_evaluate
+        
+        if save:
+            self.__save_as_json(model_dict)
+            
+        return model_dict
+        
+    def evaluate_n_models_n_times(
+        self,
+        list_models: dict or list,
+        train: "Train" = None,
+        all_data: "Data" = None,
+        n_repeat: int = 1,
+        verbose=0,
+        save: bool = False,
+    ) -> dict:
+        """Fits and evaluates multiple models configurations over train and all data multiple times.
+
+        Args:
+            list_models (dict or list): List of models or dict with the params to vary.
+            train (Train, optional): Data to train the models. Defaults to None.
+            all_data (Data, optional): Data to evaluate the models. Defaults to None.
+            n_repeat (int, optional): N value to repeat the evaluation. Defaults to 1.
+            verbose (int, optional): Specify training should be verbose or silent. Defaults to 0.
+            save (bool, optional): Flag to save or not a file with the evaluation. Defaults to False.
+
+        Returns:
+            dict: returned evaluated metric for each model.
+        """
+        if train is not None:
+            self._data_train = train
+        if all_data is not None:
+            self._all_data = all_data
+        if n_repeat is not None:
+            self._n_repeat = n_repeat
+            
+        if type(list_models) is dict:
+            params_list_varitaion = list_models
+    
+            param_names, combinations = self.__all_models_combination_generate(params_list_varitaion=params_list_varitaion)
+            
+            evaluated_models = {}
+            for idx, combination in enumerate(combinations):
+                self.__set_model_params_by_combination(param_names, combination)
+                evaluated_models[str(idx)] = self.evaluate_model_n_times(verbose=verbose)
+        else:
+            # implement if it's given a models list (thing about how to use what have been done)
+            pass
+                
+        if save:
+            self.__save_as_json(evaluated_models)
+        
+        return evaluated_models
+    
     def _evaluate_model_rmse(
         self, 
         model: "ModelInterface" = None, 
         data: "Data" = None,
     ) -> dict:
+        """Evaluates the model with the RMSE metric.
+
+        Args:
+            model (ModelInterface, optional): Model to be evaluated. Defaults to None.
+            data (Data, optional): Data to evaluates the model. Defaults to None.
+
+        Raises:
+            Exception: None data was given
+            Exception: None model was given
+
+        Returns:
+            dict: returns the RMSE value over data train, test, and all data.
+        """
         
         if data is None and self._all_data is None:
             logger.error_log(
@@ -146,6 +280,19 @@ class Evaluator:
         model: "ModelInterface", 
         data: "Data"
     ) -> dict:
+        """Evaluates the model with the MSE metric.
+
+        Args:
+            model (ModelInterface, optional): Model to be evaluated. Defaults to None.
+            data (Data, optional): Data to evaluates the model. Defaults to None.
+
+        Raises:
+            Exception: None data was given
+            Exception: None model was given
+
+        Returns:
+            dict: returns the MSE value over data train, test, and all data.
+        """
         
         if data is None and self._all_data is None:
             logger.error_log(
@@ -181,150 +328,7 @@ class Evaluator:
         
         return mse_dict
     
-    def evaluate_model(
-        self, 
-        model: "ModelInterface" = None, 
-        all_data: "Data" = None, 
-        metrics: list = None,
-        save: bool = False,
-        )-> dict:
-        """Evaluate model over train and test
-
-         Args:
-             model (ModelInterface, optional): model trained. Defaults to None.
-             data (Data, optional): Data to be evaluated. Defaults to None.
-             metrics (list, optional): list of metrics to be returned
-
-         Returns:
-             evaluated_dict: returned metrics
-         """
-        from copy import copy
-
-        if all_data is None:
-            all_data = self._all_data
-        if model is None:
-            model = self._model
-
-        data = copy(all_data)
-        evaluated_dict = {}
-        local_metrics = ['rmse', 'mse']
-        if metrics is not None:
-            local_metrics = metrics
-
-        for metric in local_metrics:
-            evaluated_dict[metric] = getattr(self, f"_evaluate_model_{metric}")(model, data)
-        
-        if save:
-            self.save_as_json(evaluated_dict)
-            
-        return evaluated_dict
-            
-    def evaluate_model_n_times(
-        self,
-        model_list: list or str = None,
-        train: "Train" = None,
-        all_data: "Data" = None,
-        n_repeat: int = 1,
-        verbose=0,
-        save: bool = False,
-    ) -> dict:
-        """
-        Fit and Evaluate a single model over train and test multiple times
-        :param model: Specify model to training and evaluate
-        :param train: Specify train temporal series to evaluate or use the train temporal series inserted in class
-        :param test: Specify test temporal series to evaluate or use the test temporal series inserted in class
-        :param n_repeat:
-        :param verbose: Specify training should be verbose or silent
-        :return: regressor_list with predictions and rmses for unique model
-        """
-        
-        if train is None:
-            train = self._data_train
-        if all_data is None:
-            all_data = self._all_data
-        if n_repeat is None:
-            n_repeat = self._n_repeat
-        
-           
-        local_model_list = model_list
-        
-        if (local_model_list is None) and (type(self._model) is str or list):
-            local_model_list = self._model
-            
-        if type(local_model_list) is str:
-            local_model_list = self.__n_times_generate(local_model_list, n_repeat=n_repeat)
-
-        elif type(local_model_list) is list:
-            local_model_list = local_model_list
-        else:
-            logger.error_log(
-                    self.__class__.__name__,
-                    self.evaluate_model_n_times.__name__,
-                    "None list or path was given in: {}".format(self.__str__),
-                )
-            raise Exception("None list or path was given")
-        
-        from copy import copy
-
-        train_data = copy(train)
-
-        reuturned_params_list = ["nodes", "epochs", "dropout", "batch_size"]
-        params_dict = { param: self.__get_model_param_value(param) for param in reuturned_params_list}
-        
-        model_dict = {}
-        model_dict["params"] = params_dict
-        
-        each_model_evaluate = []
-        for idx, model in enumerate(local_model_list):
-            model.creating()
-            model.fiting(train_data.x, train_data.y, verbose=verbose)
-            each_model_evaluate.append({"model": idx, "metrics" : self.evaluate_model(model, all_data)})
-            # model_dict["metrics_model_" + str(idx) ] =  self.evaluate_model(model, all_data)
-        
-        model_dict["models"] = each_model_evaluate
-        
-        if save:
-            self.save_as_json(model_dict)
-            
-        return model_dict
-        
-    def evaluate_n_models_n_times(
-        self,
-        list_models,
-        train: list = None,
-        test: list = None,
-        n_repeat: int = 1,
-        verbose=0,
-        save: bool = False,
-    ) -> dict:
-        """
-        Fit and Evaluate multiple models over train and test multiple times
-        :param list_models: Specify model list to training and evaluate
-        :param train: Specify train temporal series to evaluate or use the train temporal series inserted in class
-        :param test: Specify test temporal series to evaluate or use the test temporal series inserted in class
-        :param verbose: Specify training should be verbose or silent
-        :return: regressors_list with predictions and rmses for any model from list models
-        """
-        if type(list_models) is dict:
-            params_list_varitaion = list_models
-    
-            param_names, combinations = self.__all_models_combination_generate(params_list_varitaion=params_list_varitaion)
-            
-            evaluated_models = {}
-            for idx, combination in enumerate(combinations):
-                self.__set_model_params_by_combination(param_names, combination)
-                evaluated_models[str(idx)] = self.evaluate_model_n_times()
-        else:
-            # implement if it's given a model list (thing about it)
-            pass
-                
-        if save:
-            self.save_as_json(evaluated_models)
-        
-        return evaluated_models
-        
-        
-    def __n_times_generate(
+    def __n_times_model_generate(
         self,
         path_model: str = None,
         n_repeat: int = 1,
@@ -357,8 +361,8 @@ class Evaluator:
             if type(params_list_varitaion[param]) is dict: 
                 param_variation[param] = self.__get_model_param_variation(
                     param, 
-                    percent_variation=params_list_varitaion[param].get("percent_variation")  , 
-                    times= params_list_varitaion[param].get("times") , 
+                    percent_variation=params_list_varitaion[param].get("percent_variation"), 
+                    times= params_list_varitaion[param].get("times"), 
                     direction=params_list_varitaion[param].get("direction")
                 )
             else:
@@ -375,14 +379,6 @@ class Evaluator:
     ):
         return configs_manner.model_infos['model_' + param_name]
     
-    def __set_model_params_by_combination(
-        self,
-        params_list: list,
-        combination: list
-    ):
-        for param_name, value in zip(params_list, combination):
-            configs_manner.model_infos['model_' + param_name] = value
-                            
     def __get_model_param_variation(
         self,
         param_name: str,
@@ -407,7 +403,14 @@ class Evaluator:
         if direction == 'negative' or direction == 'n': 
             return self.__negative_grow(param_value, percent_variation, times)
         
-        
+    def __set_model_params_by_combination(
+        self,
+        params_list: list,
+        combination: list
+    ):
+        for param_name, value in zip(params_list, combination):
+            configs_manner.model_infos['model_' + param_name] = value
+                            
     def __bilateral_grow(
         self,
         param_value: int,
@@ -424,7 +427,6 @@ class Evaluator:
         bilateral_grow_variation = negative_grow_variation[:-1] + positive_grow_variation
         
         return bilateral_grow_variation
-    
     
     def __positive_grow(
         self,
@@ -461,7 +463,7 @@ class Evaluator:
         
         return variation_param_values
     
-    def save_as_json(
+    def __save_as_json(
         self,
         dictionary_to_save: dict,
         file_name: str = None,
@@ -469,7 +471,7 @@ class Evaluator:
         if file_name is None:
             file_name = date.today()
             
-        with open('evaluated/' + str(file_name) + 'evalation.json', 'w') as fp:
+        with open('evaluated/' + str(file_name) + 'evaluation.json', 'w') as fp:
             json.dump(dictionary_to_save, fp,  indent=4)
         
     def __str__(self):
@@ -489,3 +491,41 @@ class Evaluator:
             f"\nData test: {self._data_test}"
             f"\nRepetitions: {self.n_repeat}\n"
         )
+        
+    # def evaluate_model(
+    #     self, model=None, data_train: list = None, data_test: list = None
+    # ):
+    #     """Evaluate model over train and test
+
+    #     Args:
+    #         model (model, optional): model trained. Defaults to None.
+    #         data_train (Train, optional): Data train to be trained. Defaults to None.
+    #         data_test (Test, optional): Data test to be evaluated. Defaults to None.
+
+    #     Returns:
+    #         y_hats, rmses: predictions and rmses
+    #     """
+    #     from copy import copy
+
+    #     if data_train is None:
+    #         data_train = self.data_train
+    #     if data_test is None:
+    #         data_test = self.data_test
+    #     if model is None:
+    #         model = self._model
+
+    #     # walk-forward validation over each week
+    #     history = copy(data_train)
+    #     history.y_hat = list()
+    #     history.rmse = list()
+    #     for idx in range(len(data_test.x) + 1):
+    #         yhat = model.predicting(history)
+    #         rmse = model.calculate_rmse(history.y, yhat)
+    #         history.y_hat.append(yhat)
+    #         history.rmse.append(rmse)
+
+    #         # get real observation and add to history for predicting the next week
+    #         history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
+    #         history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
+
+    #     return history
