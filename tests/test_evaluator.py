@@ -5,58 +5,42 @@ sys.path.append("../src")
 import matplotlib.pyplot as plt
 import numpy as np
 from statistics import mean
+from math import sqrt
+from sklearn.metrics import mean_squared_error
 
 import data_manner
 import evaluator_manner
 from models.artificial import lstm_manner
+import configs_manner
 
 # --------- EXTRACT DATA
 repo = "p971074907"
 path = "brl:rn"
 feature = "date:newDeaths:newCases:"
-begin = "2020-05-01"
-end = "2021-07-01"
+begin = "2020-03-14"
+end = "2021-06-22"
 
-construtor_dados = data_manner.DataConstructor()
-data_araraquara = construtor_dados.collect_dataframe(path, repo, feature, begin, end)
+data_constructor = data_manner.DataConstructor()
+data_repo = data_constructor.collect_dataframe(path, repo, feature, begin, end)
+data_constructor.is_predicting = True
+all_data = data_constructor.build_test(data_repo) 
 
-# --------- BUILDING TRAIN AND TEST
-train, test = construtor_dados.build_train_test(data_araraquara)
-print(train.x.shape, train.y.shape)
-print(test.x.shape, test.y.shape)
+# --------- MODEL: CREATE NEW / ->{LOAD LOCALY}<- / LOAD REMOTELY - TRAIN - SAVE
 
-# --------- MODEL: CREATE NEW / LOAD LOCALY / LOAD REMOTELY - TRAIN - SAVE
+lstm_model_local = lstm_manner.ModelLSTM(path)
+lstm_model_local.loading()
 
-# lstm_model_web = lstm_manner.ModelLSTM("brl:to")
-# lstm_model_web.loading()
+# Evaluating Model
 
-lstm_model_local_2 = lstm_manner.ModelLSTM(path)
-lstm_model_local_2.loading()
+# If you want specify the metrics
+#metrics = ['rmse', 'mse']
 
-avaliador_modelo = evaluator_manner.Evaluator(lstm_model_local_2, train, test)
-history_eval = avaliador_modelo.evaluate_model()
+# Do this mode
+evaluator = evaluator_manner.Evaluator(model=lstm_model_local, all_data=all_data)
+evaluated = evaluator.evaluate_model()
+print(evaluated)
 
-for in_list in history_eval.rmse:
-    print(mean(in_list))
-
-
-colors = ["r", "g", "b"]
-points = [".", "_", "o"]
-i = 0
-plt.legend(loc="best")
-for in_list in history_eval.y_hat:
-    plt.plot(
-        in_list.reshape(in_list.shape[0], in_list.shape[1])[:, :1],
-        marker=points[i],
-        color=colors[i],
-    )
-    i += 1
-plt.show()
-
-plt.plot(ys, label="real", linewidth=1)
-plt.plot(y_hats, label="pred", linewidth=1)
-# plt.plot(np.array(rmses[0]), label='rmse 0')
-# plt.plot(np.array(rmses[1]), label='rmse 1')
-plt.legend(loc="best")
-plt.show()
-print()
+# Or do this mode
+evaluator = evaluator_manner.Evaluator()
+evaluated = evaluator.evaluate_model(lstm_model_local, all_data, save=True)
+print(evaluated)
