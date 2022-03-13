@@ -68,4 +68,4 @@ MIT
 
    [DAVI_ORCID ]: <>
    [DUNFREY_ORCID]: <https://orcid.org/0000-0002-2401-6985>
-   [EMERSON_ORCID]: <>
+   [EMERSON_ORCID]: <https://orcid.org/0000-0001-8400-7119>
