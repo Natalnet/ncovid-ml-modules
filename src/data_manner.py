@@ -116,13 +116,15 @@ class DataConstructor:
 
     def _build_data_Artificial(self, data_type, data):
         def __windowing_data(data):
+            if data.shape[0] < data.shape[1]:
+                data = data.T
             check_size = data.shape[0] // self.window_size
             if check_size * self.window_size != data.shape[0]:
                 data = data[: check_size * self.window_size]
             return np.array(np.split(data, len(data) // self.window_size))
 
-        if self.is_predicting:
-            data = self.__transpose_data(data)
+        # if self.is_predicting:
+        data = self.__transpose_data(data)
         data = __windowing_data(data)
         return data_type(data, self.window_size, self.type_norm)
 
