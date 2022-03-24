@@ -1,5 +1,6 @@
 import logger
 import sys, json, os.path
+from datetime import datetime
 
 sys.path.append("../")
 
@@ -51,6 +52,64 @@ def collect_Artificial():
         "type_norm"
     ]
     return infos
+
+
+def overwrite_Autoregressive(metadata):
+    pass
+
+
+def overwrite_Epidemiological(metadata):
+    pass
+
+
+def overwrite_Artificial(metadata):
+    model_infos["model_nodes"] = metadata["model_configs"]["Artificial"]["nodes"]
+    model_infos["model_epochs"] = metadata["model_configs"]["Artificial"]["epochs"]
+    model_infos["model_dropout"] = metadata["model_configs"]["Artificial"]["dropout"]
+    model_infos["model_batch_size"] = metadata["model_configs"]["Artificial"][
+        "batch_size"
+    ]
+    model_infos["model_earlystop"] = metadata["model_configs"]["Artificial"][
+        "earlystop"
+    ]
+    model_infos["model_is_output_in_input"] = eval(
+        metadata["model_configs"]["Artificial"]["is_output_in_input"]
+    )
+    model_infos["data_is_accumulated_values"] = eval(
+        metadata["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
+    )
+    model_infos["data_is_apply_moving_average"] = eval(
+        metadata["model_configs"]["Artificial"]["data_configs"][
+            "is_apply_moving_average"
+        ]
+    )
+    model_infos["data_window_size"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["window_size"]
+    model_infos["data_test_size_in_days"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["data_test_size_in_days"]
+    model_infos["data_type_norm"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["type_norm"]
+
+
+def overwrite(metadata: dict = None):
+    try:
+        model_infos["model_id"] = metadata["model_configs"]["model_id"]
+        model_infos["model_path_remote"] = metadata["folder_configs"][
+            "model_path_remote"
+        ]
+        model_infos["model_type"] = metadata["model_configs"]["type_used"]
+
+        getattr(sys.modules[__name__], f"overwrite_{model_type}")(metadata)
+
+        logger.debug_log(
+            "configs_manner.py", "overwite configurations", "Configurations overwrited"
+        )
+
+    except Exception as e:
+        logger.error_log("configs_manner.py", "overwite configurations", f"Error: {e}.")
 
 
 with open("../doc/configure.json") as json_file:

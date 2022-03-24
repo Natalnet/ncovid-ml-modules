@@ -85,4 +85,4 @@ class PredictorConstructor:
                 }
             )
 
-        return str(returned_dictionaty)
+        return returned_dictionaty
