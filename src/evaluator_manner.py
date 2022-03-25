@@ -143,7 +143,6 @@ class Evaluator:
         n_repeat: int = 2,
         verbose=0,
     ) -> dict:
-        from models.artificial import lstm_manner
 
         model_configs = model._params_self_modify(params_variations=params_variations)
 

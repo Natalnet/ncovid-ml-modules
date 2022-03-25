@@ -65,7 +65,7 @@ class ModelArtificalInterface(ModelInterface):
         self.__saving_metadata_file(model_id_to_save)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
-    def loading(self, model_name: str = None):
+    def loading(self, model_id: str = None):
         """Load model locally and remotely. For remote option, is necessary to fill `configure.json/model_path_remote`.
         Args:
             model_name (str, optional): The known `path + model` name. Defaults to None.
@@ -74,8 +74,8 @@ class ModelArtificalInterface(ModelInterface):
         """
         try:
             self.model = (
-                tf.keras.models.load_model(model_name)
-                if model_name
+                tf.keras.models.load_model(self._resolve_model_name(model_id))
+                if model_id
                 else tf.keras.models.load_model(
                     self._resolve_model_name(configs_manner.model_infos["model_id"])
                 )
@@ -219,8 +219,6 @@ class ModelArtificalInterface(ModelInterface):
             "epochs": {"times": 2, "percent": 0.1, "direction": "b"},
         },
     ) -> list:
-        import itertools as it
-
         def model_param_variation_generator(
             param_name: str,
             n_variations=2,

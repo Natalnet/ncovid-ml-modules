@@ -9,7 +9,7 @@ import configs_manner
 
 @app.route(
     "/lstm/repo/<repo>/path/<path>/feature/<feature>/begin/<begin>/end/<end>/",
-    methods=[""],
+    methods=["POST"],
 )
 def lstm(repo, path, feature, begin, end):
     info_json = json.loads(request.form.get("metadata"))
