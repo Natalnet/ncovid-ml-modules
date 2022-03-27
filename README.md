@@ -34,7 +34,6 @@ pip install -r requirements.txt
 >Project Folder Structure and Files
 
 * [src](src) : main Python package with source of the model.
-* [dbs](dbs/) : used as a local path to store and load data and models.
 * [docs](docs/) : contains documentation of the project.
 * [jupyter-notebook](jupyter-notebook/) : contains jupyter notebooks evaluation and modeling experimentation.
 
