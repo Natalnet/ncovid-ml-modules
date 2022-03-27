@@ -28,7 +28,9 @@ class PredictorConstructor:
         self.begin = begin
         self.end = end
         try:
-            self.input_data = self.__data_collector(path, repo, feature, begin, end)
+            self.data_to_predict = self.__data_collector(
+                path, repo, feature, begin, end
+            )
             self.model = self.__model_assemble(model_id)
             logger.debug_log(
                 self.__class__.__name__,
@@ -51,9 +53,11 @@ class PredictorConstructor:
 
     def __data_collector(self, path, repo=None, feature=None, begin=None, end=None):
         data_constructor = data_manner.DataConstructor(is_predicting=True)
-        data_collected = data_constructor.collect_to_predict(
+        print("entrou data collect")
+        data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
+        print("coletou")
         return data_constructor.build_test(data_collected)
 
     def predict(self, data_to_predict=None):
@@ -65,7 +69,7 @@ class PredictorConstructor:
         Returns:
             string: A string containing the forecasting values and them respective date. 
         """
-        data = data_to_predict if data_to_predict is not None else self.input_data
+        data = data_to_predict if data_to_predict is not None else self.data_to_predict
         try:
             y_hat = self.model.predicting(data)
             return y_hat.reshape(-1)
