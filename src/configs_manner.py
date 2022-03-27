@@ -1,6 +1,5 @@
 import logger
 import sys, json, os.path
-from datetime import datetime
 
 sys.path.append("../")
 
@@ -97,9 +96,7 @@ def overwrite_Artificial(metadata):
 def overwrite(metadata: dict = None):
     try:
         model_infos["model_id"] = metadata["model_configs"]["model_id"]
-        model_infos["model_path_remote"] = metadata["folder_configs"][
-            "model_path_remote"
-        ]
+        model_path_remote = metadata["folder_configs"]["model_path_remote"]
         model_infos["model_type"] = metadata["model_configs"]["type_used"]
 
         getattr(sys.modules[__name__], f"overwrite_{model_type}")(metadata)

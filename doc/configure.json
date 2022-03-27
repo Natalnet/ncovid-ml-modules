@@ -12,34 +12,34 @@
   "model_configs": {
     "type_used": "Artificial",
     "is_predicting": "False",
-    "Autoregressive": {
-      "model": "arima",
-      "p": 1,
-      "d": 1,
-      "q": 1
-    },
-    "Epidemiological": {
-      "model": "sir",
-      "s_initial": 100,
-      "i_initial": 1,
-      "e_initial": 1,
-      "r_initial": 0,
-      "d_initial": 0
-    },
     "Artificial": {
       "model": "lstm",
       "nodes": 300,
-      "epochs": 300,
+      "epochs": 100,
       "dropout": 0.1,
       "batch_size": 64,
-      "earlystop": 75,
+      "earlystop": 30,
       "is_output_in_input": "True",
       "data_configs": {
         "is_accumulated_values": "False",
         "is_apply_moving_average": "True",
         "window_size": 7,
-        "data_test_size_in_days": 15,
+        "data_test_size_in_days": 35,
         "type_norm": ""
+      },
+      "Autoregressive": {
+        "model": "arima",
+        "p": 1,
+        "d": 1,
+        "q": 1
+      },
+      "Epidemiological": {
+        "model": "sir",
+        "s_initial": 100,
+        "i_initial": 1,
+        "e_initial": 1,
+        "r_initial": 0,
+        "d_initial": 0
       }
     }
   }
