@@ -1,54 +1,51 @@
 
-# Ncovid Functionalites
+# NCovid Modules
 
-The Ncovid library is designated for multiple goals. Some of them are listed below 
-with their respective basic (in high-level) commands and jupyter-notebook files.
+The Ncovid library is designed for several purposes. Some of them are listed below with their respective basic (high-level) commands and Jupyter-notebook files.
 
 ## Usage/Examples
 
-- **For Data Manipulation**
+- **Data Manipulation**
 
     [Loading local data](loading_local_data.ipynb)
 
-        set configuration
-        create data
+        set and import project configurations
         collect local data
 
     [Loading remote data](loading_remote_data.ipynb)
 
-        set configuration
-        create data
+        set and import project configurations
         collect remote data
     
     [Building train dataset](building_train_dataset.ipynb)
 
-        set the configuration
-        load data
-        build train
+        set and import project configurations
+        collect local data
+        build data train
 
     [Building test dataset](building_test_dataset.ipynb)
 
-        set configuration
-        load data
-        build test
+        set and import project configurations
+        collect local data
+        build data test
 
     [Building train and test dataset](building_train_and_test_dataset.ipynb)
 
-        set configuration
-        load data
-        build train test
+        set and import project configurations
+        collect local data
+        build data train and test
 
-- **For Model Manipulation**
+- **Model Manipulation**
 
     [Creating model](creating_a_model.ipynb)
 
-        set configuration
+        set and import project configurations
         build data
         create model
     
     [Training saving model](training_and_saving_a_model.ipynb)  
 
-        set configurations
+        set and import project configurations
         build data
         create model
         fit model
@@ -56,13 +53,13 @@ with their respective basic (in high-level) commands and jupyter-notebook files.
 
     [Loading local model](loading_a_local_model.ipynb) 
         
-        set configuration
+        set and import project configurations
         create model
         load local model
     
     [Loading remote model](loading_a_remote_model.ipynb) 
         
-        set configuration
+        set and import project configurations
         create model
         load remote model
 
