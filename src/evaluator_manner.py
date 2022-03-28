@@ -1,154 +1,212 @@
-import numpy as np
-from data_manner import Train, Test
+import logger, configs_manner
+from data_manner import Train, Test, Data
+from models.model_interface import ModelInterface
+
+import statistics, math
+import json, typing, copy
+from datetime import date
+
+
+exec(
+    f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
+)
 
 
 class Evaluator:
-    def __init__(self, model=None, data_train=None, data_test=None, n_repeat=1):
-        self._data_train = data_train
-        self._data_test = data_test
-        self.n_repeat = n_repeat
-        self._model = model
-        self._models = list()
-        if model is not None:
-            self._models.append(model)
-
-    @property
-    def data_train(self):
-        return self._data_train
-
-    @data_train.setter
-    def data_train(self, train):
-        self._data_train = train
-
-    @property
-    def data_test(self):
-        return self._data_test
-
-    @data_test.setter
-    def data_test(self, test):
-        self._data_test = test
+    def __init__(
+        self,
+        model: "ModelInterface" = None,
+        models: typing.List["ModelInterface"] = None,
+        metrics: typing.List[str] = ["mse", "rmse"],
+    ):
+        self.__model = model
+        if models is None:
+            self.__models = list()
+        else:
+            self.__models = models
+        self.__metrics = metrics
 
     @property
     def model(self):
-        return self._model
+        return self.__model
 
     @model.setter
-    def model(self, new_model):
-        self._model = new_model
-        self._models.append(new_model)
+    def model(self, model: "ModelInterface"):
+        self.__model = model
+        self.__models.append(model)
 
     @property
     def models(self):
-        return self._models
+        return self.__models
 
     @models.setter
-    def models(self, new_models):
-        self._models = new_models
+    def models(self, models: typing.List["ModelInterface"]):
+        self.__models = models
+
+    @property
+    def metrics(self):
+        return self.__metrics
+
+    @metrics.setter
+    def metrics(self, metrics: typing.List[str]):
+        self.__metrics = metrics
 
     def clean_models(self):
         self._models = list()
 
-    def evaluate_model(self, model=None, data_train=None, data_test=None):
-        """Evaluate model over train and test
+    def evaluate_model(self, data: "Data", model: "ModelInterface" = None) -> dict:
+        model = copy.copy(self.__model) if model is None else model
+        assert model is not None, logger.error_log(
+            self.__class__.__name__,
+            self.evaluate_model_n_times.__name__,
+            "Empty model",
+        )
 
-        Args:
-            model (model, optional): model trained. Defaults to None.
-            data_train (Train, optional): Data train to be trained. Defaults to None.
-            data_test (Test, optional): Data test to be evaluated. Defaults to None.
+        eval_result = dict()
+        for metric in self.__metrics:
+            eval_result[metric] = getattr(Evaluator, f"_extracting_{metric}")(
+                model=model, data=data
+            )
 
-        Returns:
-            y_hats, rmses: predictions and rmses
-        """
-
-        if data_train is None:
-            data_train = self.data_train
-        if data_test is None:
-            data_test = self.data_test
-        if model is None:
-            model = self._model
-
-        # walk-forward validation over each week
-        history = data_train
-        history.y_hat = list()
-        history.rmse = list()
-        y = list()
-        for idx, num in enumerate(data_test.x):
-            y.append(history.y)
-            # predict the week
-            yhat, rmse = model.predicting(history)
-            # store the predictions
-            history.y_hat.append(yhat)
-            history.rmse.append(rmse)
-            # get real observation and add to history for predicting the next week
-            history.x = np.vstack((history.x, data_test.x[idx : idx + 1 :,]))
-            history.y = np.vstack((history.y, data_test.y[idx : idx + 1 :,]))
-        # evaluate predictions days for each week
-        # predictions = np.array(predictions)
-        y = y[-1].reshape(y[-1].shape[0], y[-1].shape[1])[:, :1]
-        history.y_hat = history.y_hat[-1].reshape(
-            history.y_hat[-1].shape[0], history.y_hat[-1].shape[1]
-        )[:, :1]
-        return y, history.y_hat, history.rmse[-1]
+        return eval_result
 
     def evaluate_model_n_times(
-        self, model=None, train=None, test=None, n_repeat=None, verbose=0
-    ):
-        """
-        Fit and Evaluate a single model over train and test multiple times
-        :param model: Specify model to training and evaluate
-        :param train: Specify train temporal series to evaluate or use the train temporal series inserted in class
-        :param test: Specify test temporal series to evaluate or use the test temporal series inserted in class
-        :param n_repeat:
-        :param verbose: Specify training should be verbose or silent
-        :return: regressor_list with predictions and rmses for unique model
-        """
-        if train is None:
-            train = self.data_train
-        if test is None:
-            test = self.data_test
-        if model is None:
-            model = self._model
-        if n_repeat is None:
-            n_repeat = self.n_repeat
+        self,
+        data: "Data",
+        data_train: "Train",
+        model: "ModelInterface" = None,
+        n_repeat: int = 2,
+        verbose=0,
+    ) -> dict:
+        model = copy.copy(self.__model) if model is None else model
+        assert model is not None, logger.error_log(
+            self.__class__.__name__,
+            self.evaluate_model_n_times.__name__,
+            "Empty model",
+        )
 
-        regressor_list = list()
-        y_list = list()
-        y_hat_list = list()
-        rmse_list = list()
-        for idx, num in enumerate(n_repeat):
-            regressor_list.append(model)
-            regressor_list[idx].fiting(train.x, train.y, verbose)
-            y, y_hat, rmse = self.evaluate_model(model, train, test)
-            y_list.append(y)
-            y_hat_list.append(y_hat)
-            rmse_list.append(rmse)
+        params = ["nodes", "epochs", "dropout", "batch_size"]
+        model_params = {param: model._extract_param_value(param) for param in params}
 
-        return list(zip(regressor_list, y_list, y_hat_list, rmse_list))
+        model_evals = {}
+        model_evals["params"] = model_params
+
+        evaluations = []
+        for idx in range(n_repeat):
+            model.creating()
+            model.fiting(data_train.x, data_train.y, verbose=verbose)
+            evaluations.append(
+                {"model": idx, "metrics": self.evaluate_model(model=model, data=data)}
+            )
+
+        model_evals["eval"] = evaluations
+
+        return model_evals
 
     def evaluate_n_models_n_times(
-        self, list_models=None, train=None, test=None, n_repeat=1, verbose=0
-    ):
-        """
-        Fit and Evaluate multiple models over train and test multiple times
-        :param list_models: Specify model list to training and evaluate
-        :param train: Specify train temporal series to evaluate or use the train temporal series inserted in class
-        :param test: Specify test temporal series to evaluate or use the test temporal series inserted in class
-        :param verbose: Specify training should be verbose or silent
-        :return: regressors_list with predictions and rmses for any model from list models
-        """
+        self,
+        data: "Data",
+        data_train: "Train",
+        models: typing.List["ModelInterface"] = None,
+        n_repeat: int = 2,
+        verbose=0,
+    ) -> dict:
 
-        if list_models is None:
-            list_models = self._models
+        models = copy.copy(self.__models) if models is None else models
+        assert models is not None, logger.error_log(
+            self.__class__.__name__,
+            self.evaluate_n_models_n_times.__name__,
+            "Empty model",
+        )
 
-        regressors_list = list()
-
-        for model in list_models:
-            regressors_list.append(
-                self.evaluate_model_n_times(model, train, test, n_repeat, verbose)
+        models_evals = {}
+        for idx, model in enumerate(models):
+            models_evals[str(idx)] = self.evaluate_model_n_times(
+                model=model,
+                data=data,
+                data_train=data_train,
+                n_repeat=n_repeat,
+                verbose=verbose,
             )
-            self._model = model
 
-        return regressors_list
+        return models_evals
+
+    def evaluate_models_autoconfig_n_times(
+        self,
+        data: "Data",
+        data_train: "Train",
+        model: "ModelInterface" or typing.List["ModelInterface"],
+        params_variations: dict = {
+            "nodes": {"times": 2, "percent": 5, "direction": "b"},
+            "epochs": {"times": 2, "percent": 5, "direction": "b"},
+        },
+        n_repeat: int = 2,
+        verbose=0,
+    ) -> dict:
+
+        model_configs = model._params_self_modify(params_variations=params_variations)
+
+        evals = {}
+        for idx, param in enumerate(model_configs):
+            for idx_value, new_config in enumerate(model_configs[param]):
+                configs_manner.model_infos["model_" + param] = new_config
+                model.creating()
+                evals[str(idx) + "." + str(idx_value)] = self.evaluate_model_n_times(
+                    model=model,
+                    data_train=data_train,
+                    data=data,
+                    n_repeat=n_repeat,
+                    verbose=verbose,
+                )
+
+        return evals
+
+    def _extracting_mse(model: "ModelInterface", data: "Data") -> dict:
+        test_period = (
+            configs_manner.model_infos["data_test_size_in_days"]
+            // configs_manner.model_infos["data_window_size"]
+        )
+
+        yhat = model.predicting(data.x)
+        mse = model.calculate_mse(data.y, yhat)
+
+        mse_dict = {
+            "mse_total": statistics.mean(mse),
+            "mse_train": statistics.mean(mse[:test_period]),
+            "mse_test": statistics.mean(mse[:-test_period]),
+        }
+
+        return mse_dict
+
+    def _extracting_rmse(model: "ModelInterface", data: "Data") -> dict:
+        test_period = (
+            configs_manner.model_infos["data_test_size_in_days"]
+            // configs_manner.model_infos["data_window_size"]
+        )
+
+        yhat = model.predicting(data.x)
+        rmse = model.calculate_rmse(data.y, yhat)
+
+        rmse_dict = {
+            "rmse_total": math.sqrt(statistics.mean([r ** 2 for r in rmse])),
+            "rmse_train": math.sqrt(
+                statistics.mean([r ** 2 for r in rmse[:test_period]])
+            ),
+            "rmse_test": math.sqrt(
+                statistics.mean([r ** 2 for r in rmse[:-test_period]])
+            ),
+        }
+
+        return rmse_dict
+
+    def export_to_json(
+        self, dictionary_to_save: dict, file_name: str = None,
+    ):
+        if file_name is None:
+            file_name = date.today()
+
+        with open("evaluated/" + str(file_name) + "_evaluation.json", "w") as fp:
+            json.dump(dictionary_to_save, fp, indent=4)
 
     def __str__(self):
         if type(self._data_train) is Train and type(self._data_test) is Test:

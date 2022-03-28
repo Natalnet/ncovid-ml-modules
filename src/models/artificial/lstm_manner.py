@@ -8,7 +8,12 @@ from tensorflow.keras.models import Model
 
 class ModelLSTM(ModelArtificalInterface):
     def __init__(
-        self, locale, model=None, data_window_size=None, nodes=None, dropout=None
+        self,
+        locale: str,
+        model: Model = None,
+        data_window_size: int = None,
+        nodes: int = None,
+        dropout: float = None,
     ):
         """Manager model LSTM.
 
@@ -70,4 +75,3 @@ class ModelLSTM(ModelArtificalInterface):
             f"\n\tfeatures: { self.n_features }"
             f"\n\tdropout: {self.dropout}"
         )
-
