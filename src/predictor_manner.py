@@ -53,11 +53,9 @@ class PredictorConstructor:
 
     def __data_collector(self, path, repo=None, feature=None, begin=None, end=None):
         data_constructor = data_manner.DataConstructor(is_predicting=True)
-        print("entrou data collect")
         data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
-        print("coletou")
         return data_constructor.build_test(data_collected)
 
     def predict(self, data_to_predict=None):
