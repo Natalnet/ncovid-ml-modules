@@ -105,7 +105,8 @@ The Ncovid library is designed for several purposes. Some of them are listed bel
 
     [Evaluating N models N times](evaluating_n_models_n_times.ipynb)
 
-        set variations
-        set metrics
+        build train
+        build test
+        create model
         create evaluator
         model evaluator
