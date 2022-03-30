@@ -40,12 +40,12 @@ class ModelArtificalInterface(ModelInterface):
     def __model_id_generate(self):
         return str(uuid.uuid1())
 
-    def __saving_metadata_file(self, model_id):
+    def __saving_metadata_file(self, model_id, model_name):
         with open(configs_manner.doc_folder + "configure.json") as json_file:
             data = json.load(json_file)
             metadata = {}
             metadata["folder_configs"] = {
-                "model_remot_path": configs_manner.model_path_remote
+                "model_remote_path": configs_manner.model_path_remote
             }
             metadata["model_configs"] = {
                 "model_id": model_id,
@@ -56,13 +56,13 @@ class ModelArtificalInterface(ModelInterface):
                 ],
             }
 
-            with open(configs_manner.doc_folder + "metadata.json", "w") as json_to_save:
+            with open(configs_manner.doc_folder + "metadata" + model_name + ".json", "w") as json_to_save:
                 json.dump(metadata, json_to_save, indent=4)
 
-    def saving(self):
+    def saving(self, model_name):
         model_id_to_save = self.__model_id_generate()
         self.model.save(self._resolve_model_name(model_id_to_save))
-        self.__saving_metadata_file(model_id_to_save)
+        self.__saving_metadata_file(model_id_to_save, model_name)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
     def loading(self, model_id: str = None):
