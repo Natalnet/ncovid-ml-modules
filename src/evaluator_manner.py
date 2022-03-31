@@ -17,7 +17,7 @@ class Evaluator:
         self,
         model: "ModelInterface" = None,
         models: typing.List["ModelInterface"] = None,
-        metrics: typing.List[str] = ["mse", "rmse"],
+        metrics: typing.List[str] = ["mse", "rmse", "score"],
     ):
         self.__model = model
         if models is None:
@@ -167,7 +167,7 @@ class Evaluator:
             // configs_manner.model_infos["data_window_size"]
         )
 
-        yhat = model.predicting(data.x)
+        yhat = model.predicting(data)
         mse = model.calculate_mse(data.y, yhat)
 
         mse_dict = {
@@ -184,7 +184,7 @@ class Evaluator:
             // configs_manner.model_infos["data_window_size"]
         )
 
-        yhat = model.predicting(data.x)
+        yhat = model.predicting(data)
         rmse = model.calculate_rmse(data.y, yhat)
 
         rmse_dict = {
@@ -198,6 +198,23 @@ class Evaluator:
         }
 
         return rmse_dict
+
+    def _extracting_score(model: "ModelInterface", data: "Data") -> dict:
+        test_period = (
+            configs_manner.model_infos["data_test_size_in_days"]
+            // configs_manner.model_infos["data_window_size"]
+        )
+
+        yhat = model.predicting(data)
+        score, score_test, score_train = model.calculate_score(data.y, yhat)
+
+        score_dict = {
+            "score_total": score,
+            "score_train": score_train,
+            "score_test": score_test,
+        }
+
+        return score_dict
 
     def export_to_json(
         self, dictionary_to_save: dict, file_name: str = None,

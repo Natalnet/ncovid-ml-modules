@@ -29,6 +29,7 @@ class ModelArtificalInterface(ModelInterface):
             patience=configs_manner.model_infos["model_earlystop"],
         )
         self.n_features = configs_manner.model_infos["data_n_features"]
+        self.data_test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
 
     def _resolve_model_name(self, model_id, is_remote=False):
         return (
@@ -203,6 +204,32 @@ class ModelArtificalInterface(ModelInterface):
 
     def calculate_nrsme():
         pass
+
+    def calculate_score(self, y, yhat):
+        s = 0
+        s_test = 0
+        s_train = 0
+        n_test = self.data_test_size_in_days
+        n_input = self.data_window_size
+        for row in range(y.shape[0]):
+            for col in range(y.shape[1]):
+                # geral (treino + test)
+                s += (y[row, col] - yhat[row, col])**2
+                # só teste
+                if row > y.shape[0]-(n_test/n_input):
+                    s_test += (y[row, col] - yhat[row, col])**2
+                # só treino
+                if row < y.shape[0]-(n_test/n_input):
+                    s_train += (y[row, col] - yhat[row, col])**2
+        # rmse geral (treino + teste)
+        score = sqrt(s / y.shape[1])
+        # rmse para dados de teste (test)
+        score_test = sqrt(s_test / y.shape[1])
+        # rmse para dados de treino (train)
+        score_train = sqrt(s_train / y.shape[1])
+
+        return score, score_test, score_train
+        
 
     def param_value(self, param_name: str):
         return configs_manner.model_infos["model_" + param_name]
