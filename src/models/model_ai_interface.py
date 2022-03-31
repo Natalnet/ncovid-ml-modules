@@ -4,7 +4,8 @@ from typing import Tuple
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping
 from math import sqrt
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score
+from scipy.stats import pearsonr
 
 import logger
 import configs_manner
@@ -192,12 +193,94 @@ class ModelArtificalInterface(ModelInterface):
         )
         return mse
 
-    def calculate_mae():
-        pass
+    def calculate_mae(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    ) -> list or Tuple[list, list]:
+        if len(y_orig) != len(y_hat):
+            logger.error_log(
+                self.__class__.__name__,
+                self.calculate_rmse.__name__,
+                "The list must to have same size",
+            )
+            return None
 
-    def calculate_R2():
-        pass
+        mae = [
+            mean_absolute_error(y_hat[idx], y_orig[idx])
+            for idx, _ in enumerate(y_orig)
+        ]
 
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "MAE calculated"
+        )
+
+        return mae
+    
+    def calculate_mape(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    ) -> list or Tuple[list, list]:
+        if len(y_orig) != len(y_hat):
+            logger.error_log(
+                self.__class__.__name__,
+                self.calculate_rmse.__name__,
+                "The list must to have same size",
+            )
+            return None
+
+        mape = [
+            mean_absolute_percentage_error(y_hat[idx], y_orig[idx])
+            for idx, _ in enumerate(y_orig)
+        ]
+
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "MAPE calculated"
+        )
+
+        return mape
+        
+
+    def calculate_r2(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    ) -> list or Tuple[list, list]:
+        if len(y_orig) != len(y_hat):
+            logger.error_log(
+                self.__class__.__name__,
+                self.calculate_rmse.__name__,
+                "The list must to have same size",
+            )
+            return None
+
+        r2 = [
+            r2_score(y_hat[idx], y_orig[idx])
+            for idx, _ in enumerate(y_orig)
+        ]
+
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "R2 score calculated"
+        )
+
+        return r2
+    
+    def calculate_cc(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    ) -> list or Tuple[list, list]:
+        if len(y_orig) != len(y_hat):
+            logger.error_log(
+                self.__class__.__name__,
+                self.calculate_rmse.__name__,
+                "The list must to have same size",
+            )
+            return None
+
+        cc = [
+            pearsonr(y_hat[idx].reshape(-1), y_orig[idx].reshape(-1))[0]
+            for idx, _ in enumerate(y_orig)
+        ]
+
+        logger.debug_log(
+            self.__class__.__name__, self.predicting.__name__, "Correaltion calculated"
+        )
+
+        return cc
+    
+    def calculate_crm():
+        pass
+    
     def calculate_rse():
         pass
 
