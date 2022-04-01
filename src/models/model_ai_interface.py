@@ -163,7 +163,7 @@ class ModelArtificalInterface(ModelInterface):
             return None
 
         rmse = [
-            sqrt(mean_squared_error(y_hat[idx], y_orig[idx]))
+            sqrt(mean_squared_error(y_orig[idx], y_hat[idx]))
             for idx, _ in enumerate(y_orig)
         ]
 
@@ -185,7 +185,7 @@ class ModelArtificalInterface(ModelInterface):
             return None
 
         mse = [
-            mean_squared_error(y_hat[idx], y_orig[idx]) for idx, _ in enumerate(y_orig)
+            mean_squared_error(y_orig[idx], y_hat[idx]) for idx, _ in enumerate(y_orig)
         ]
 
         logger.debug_log(
@@ -193,7 +193,8 @@ class ModelArtificalInterface(ModelInterface):
         )
         return mse
 
-    def calculate_mae(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    def calculate_mae(
+        self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
     ) -> list or Tuple[list, list]:
         if len(y_orig) != len(y_hat):
             logger.error_log(
@@ -204,7 +205,7 @@ class ModelArtificalInterface(ModelInterface):
             return None
 
         mae = [
-            mean_absolute_error(y_hat[idx], y_orig[idx])
+            mean_absolute_error(y_orig[idx], y_hat[idx])
             for idx, _ in enumerate(y_orig)
         ]
 
@@ -214,7 +215,8 @@ class ModelArtificalInterface(ModelInterface):
 
         return mae
     
-    def calculate_mape(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    def calculate_mape(
+        self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
     ) -> list or Tuple[list, list]:
         if len(y_orig) != len(y_hat):
             logger.error_log(
@@ -225,7 +227,7 @@ class ModelArtificalInterface(ModelInterface):
             return None
 
         mape = [
-            mean_absolute_percentage_error(y_hat[idx], y_orig[idx])
+            mean_absolute_percentage_error(y_orig[idx], y_hat[idx])
             for idx, _ in enumerate(y_orig)
         ]
 
@@ -235,8 +237,8 @@ class ModelArtificalInterface(ModelInterface):
 
         return mape
         
-
-    def calculate_r2(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    def calculate_r2(
+        self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
     ) -> list or Tuple[list, list]:
         if len(y_orig) != len(y_hat):
             logger.error_log(
@@ -246,18 +248,16 @@ class ModelArtificalInterface(ModelInterface):
             )
             return None
 
-        r2 = [
-            r2_score(y_hat[idx], y_orig[idx])
-            for idx, _ in enumerate(y_orig)
-        ]
-
+        r2 = r2_score(y_orig, y_hat)
+            
         logger.debug_log(
             self.__class__.__name__, self.predicting.__name__, "R2 score calculated"
         )
 
         return r2
     
-    def calculate_cc(self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
+    def calculate_cc(
+        self, y_orig: list or Tuple[list, list], y_hat: list or Tuple[list, list]
     ) -> list or Tuple[list, list]:
         if len(y_orig) != len(y_hat):
             logger.error_log(
@@ -267,11 +267,8 @@ class ModelArtificalInterface(ModelInterface):
             )
             return None
 
-        cc = [
-            pearsonr(y_hat[idx].reshape(-1), y_orig[idx].reshape(-1))[0]
-            for idx, _ in enumerate(y_orig)
-        ]
-
+        cc = pearsonr(y_hat, y_orig)[0]
+          
         logger.debug_log(
             self.__class__.__name__, self.predicting.__name__, "Correaltion calculated"
         )
