@@ -1,9 +1,11 @@
-name: ci
+name: docker-publish
 
 on:
   push:
     branches:
       - 'main'
+    tags:
+      - "v*"
 
 jobs:
   docker:
@@ -26,4 +28,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: almeidafranci/ncovid-predictor:test
+          tags: almeidafranci/ncovid-predictor:latest
