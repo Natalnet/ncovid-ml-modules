@@ -133,16 +133,16 @@ class ModelArtificalInterface(ModelInterface):
             )
             raise
 
-    def predicting(self, data: Test) -> list:
+    def predicting(self, X: Test) -> list:
         """Make predictions (often test data)
 
         Args:
-            data (Test): data to make predictions
+            X (Test): data to make predictions
 
         Returns:
             Test.y_hat and Test.rmse: predictions and its rmse
         """
-        yhat = self.model.predict(data, verbose=0)
+        yhat = self.model.predict(X, verbose=0)
 
         logger.debug_log(
             self.__class__.__name__, self.predicting.__name__, "Data predicted"

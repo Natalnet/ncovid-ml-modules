@@ -28,9 +28,7 @@ class PredictorConstructor:
         self.begin = begin
         self.end = end
         try:
-            self.data_to_predict = self.__data_collector(
-                path, repo, feature, begin, end
-            )
+            self.data_X = self.__data_collector(path, repo, feature, begin, end).x
             self.model = self.__model_assemble(model_id)
             logger.debug_log(
                 self.__class__.__name__,
@@ -58,18 +56,18 @@ class PredictorConstructor:
         )
         return data_constructor.build_test(data_collected)
 
-    def predict(self, data_to_predict=None):
+    def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
 
         Args:
-            data_to_predict (object, optional): Data object containing the data.x and a data.y variables. Defaults to None.
+            data_X (data.x, optional): data.x variable to predict. Defaults to None.
 
         Returns:
             string: A string containing the forecasting values and them respective date. 
         """
-        data = data_to_predict if data_to_predict is not None else self.data_to_predict
+        data_X = data_X if data_X is not None else self.data_X
         try:
-            y_hat = self.model.predicting(data)
+            y_hat = self.model.predicting(data_X)
             return y_hat.reshape(-1)
         except Exception as e:
             logger.error_log(

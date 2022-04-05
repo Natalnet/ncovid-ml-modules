@@ -3,7 +3,7 @@
         "model_remot_path": "https://"
     },
     "model_configs": {
-        "model_id": "f81dac42-ac79-11ec-9b9b-48a47252b4f8",
+        "model_id": "15ce5f24-b4e1-11ec-9d4f-48a47252b4f8",
         "type_used": "Artificial",
         "is_predicting": false,
         "Artificial": {

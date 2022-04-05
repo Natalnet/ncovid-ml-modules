@@ -15,10 +15,10 @@ def lstm(repo, path, feature, begin, end):
     info_json = json.loads(request.form.get("metadata"))
     configs_manner.overwrite(info_json)
     predictor_obj = predictor_manner.PredictorConstructor(
-        path, repo, feature, begin, end
+        configs_manner.model_infos["model_id"], path, repo, feature, begin, end
     )
     response = predictor_obj.predict()
-    response_json = jsonify(response)
+    response_json = jsonify(predictor_obj.predictions_to_weboutput(response))
     return response_json
 
 
