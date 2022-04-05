@@ -48,7 +48,7 @@ class PredictorConstructor:
 
     def __model_assemble(self, model_id):
         model_obj = self.__get_model_obj(model_id)
-        model_obj.loading()
+        model_obj.loading(model_id)
         return model_obj
 
     def __data_collector(self, path, repo=None, feature=None, begin=None, end=None):
