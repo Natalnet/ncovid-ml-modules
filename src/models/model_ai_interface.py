@@ -29,6 +29,9 @@ class ModelArtificalInterface(ModelInterface):
             patience=configs_manner.model_infos["model_earlystop"],
         )
         self.n_features = configs_manner.model_infos["data_n_features"]
+        self.data_test_size_in_days = configs_manner.model_infos[
+            "data_test_size_in_days"
+        ]
 
     def _resolve_model_name(self, model_id, is_remote=False):
         return (
@@ -40,12 +43,12 @@ class ModelArtificalInterface(ModelInterface):
     def __model_id_generate(self):
         return str(uuid.uuid1())
 
-    def __saving_metadata_file(self, model_id):
+    def __saving_metadata_file(self, model_id, model_name):
         with open(configs_manner.doc_folder + "configure.json") as json_file:
             data = json.load(json_file)
             metadata = {}
             metadata["folder_configs"] = {
-                "model_remot_path": configs_manner.model_path_remote
+                "model_remote_path": configs_manner.model_path_remote
             }
             metadata["model_configs"] = {
                 "model_id": model_id,
@@ -56,13 +59,15 @@ class ModelArtificalInterface(ModelInterface):
                 ],
             }
 
-            with open(configs_manner.doc_folder + "metadata.json", "w") as json_to_save:
+            with open(
+                configs_manner.doc_folder + "metadata" + model_name + ".json", "w"
+            ) as json_to_save:
                 json.dump(metadata, json_to_save, indent=4)
 
-    def saving(self):
+    def saving(self, model_name):
         model_id_to_save = self.__model_id_generate()
         self.model.save(self._resolve_model_name(model_id_to_save))
-        self.__saving_metadata_file(model_id_to_save)
+        self.__saving_metadata_file(model_id_to_save, model_name)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
     def loading(self, model_id: str = None):
@@ -140,7 +145,7 @@ class ModelArtificalInterface(ModelInterface):
             X (Test): data to make predictions
 
         Returns:
-            Test.y_hat and Test.rmse: predictions and its rmse
+            y_hat: predictions 
         """
         yhat = self.model.predict(X, verbose=0)
 
@@ -203,6 +208,31 @@ class ModelArtificalInterface(ModelInterface):
 
     def calculate_nrsme():
         pass
+
+    def calculate_score(self, y, yhat):
+        s = 0
+        s_test = 0
+        s_train = 0
+        n_test = self.data_test_size_in_days
+        n_input = self.data_window_size
+        for row in range(y.shape[0]):
+            for col in range(y.shape[1]):
+                # geral (treino + test)
+                s += (y[row, col] - yhat[row, col]) ** 2
+                # só teste
+                if row > y.shape[0] - (n_test / n_input):
+                    s_test += (y[row, col] - yhat[row, col]) ** 2
+                # só treino
+                if row < y.shape[0] - (n_test / n_input):
+                    s_train += (y[row, col] - yhat[row, col]) ** 2
+        # rmse geral (treino + teste)
+        score = sqrt(s / y.shape[1])
+        # rmse para dados de teste (test)
+        score_test = sqrt(s_test / y.shape[1])
+        # rmse para dados de treino (train)
+        score_train = sqrt(s_train / y.shape[1])
+
+        return score, score_test, score_train
 
     def param_value(self, param_name: str):
         return configs_manner.model_infos["model_" + param_name]
