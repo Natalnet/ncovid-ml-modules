@@ -199,6 +199,82 @@ class Evaluator:
 
         return rmse_dict
 
+    def _extracting_mae(self, model: "ModelInterface", data: "Data") -> dict:
+        test_period = (
+            configs_manner.model_infos["data_test_size_in_days"]
+            // configs_manner.model_infos["data_window_size"]
+        )
+        dws = configs_manner.model_infos["data_window_size"]
+
+        yhat = model.predicting(data.x)
+        mae = model.calculate_mae(data.y, yhat)
+
+        mae_dict = {
+            "mae_total": sum([m * dws for m in mae]) / (len(yhat) * dws),
+            "mae_train": sum([m * dws for m in mae[:test_period]]) / (len(yhat) * dws),
+            "mae_test": sum([m * dws for m in mae[:-test_period]]) / (len(yhat) * dws),
+        }
+
+        return mae_dict
+
+    def _extracting_mape(self, model: "ModelInterface", data: "Data") -> dict:
+        test_period = (
+            configs_manner.model_infos["data_test_size_in_days"]
+            // configs_manner.model_infos["data_window_size"]
+        )
+        dws = configs_manner.model_infos["data_window_size"]
+
+        yhat = model.predicting(data.x)
+        mape = model.calculate_mape(data.y, yhat)
+
+        mape_dict = {
+            "mape_total": sum([m * dws for m in mape]) / (len(yhat) * dws),
+            "mape_train": sum([m * dws for m in mape[:test_period]])
+            / (len(yhat) * dws),
+            "mape_test": sum([m * dws for m in mape[:-test_period]])
+            / (len(yhat) * dws),
+        }
+
+        return mape_dict
+
+    def _extracting_r2(self, model: "ModelInterface", data: "Data") -> dict:
+
+        test_size = configs_manner.model_infos["data_test_size_in_days"]
+
+        yhat = model.predicting(data.x)
+        r2_total = model.calculate_r2(data.y.reshape(-1), yhat.reshape(-1))
+
+        r2_dict = {
+            "r2_total": r2_total,
+            "r2_train": model.calculate_r2(
+                data.y.reshape(-1)[:test_size], yhat.reshape(-1)[:test_size]
+            ),
+            "r2_test": model.calculate_r2(
+                data.y.reshape(-1)[:-test_size], yhat.reshape(-1)[:-test_size]
+            ),
+        }
+
+        return r2_dict
+
+    def _extracting_cc(self, model: "ModelInterface", data: "Data") -> dict:
+
+        test_size = configs_manner.model_infos["data_test_size_in_days"]
+
+        yhat = model.predicting(data.x)
+        cc_total = model.calculate_cc(data.y.reshape(-1), yhat.reshape(-1))
+
+        cc_dict = {
+            "cc_total": cc_total,
+            "cc_train": model.calculate_cc(
+                data.y.reshape(-1)[:test_size], yhat.reshape(-1)[:test_size]
+            ),
+            "cc_test": model.calculate_cc(
+                data.y.reshape(-1)[:-test_size], yhat.reshape(-1)[:-test_size]
+            ),
+        }
+
+        return cc_dict
+
     def _extracting_score(model: "ModelInterface", data: "Data") -> dict:
 
         yhat = model.predicting(data.x)
