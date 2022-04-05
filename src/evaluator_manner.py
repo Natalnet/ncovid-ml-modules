@@ -199,7 +199,7 @@ class Evaluator:
 
         return rmse_dict
 
-    def _extracting_mae(self, model: "ModelInterface", data: "Data") -> dict:
+    def _extracting_mae(model: "ModelInterface", data: "Data") -> dict:
         test_period = (
             configs_manner.model_infos["data_test_size_in_days"]
             // configs_manner.model_infos["data_window_size"]
@@ -217,7 +217,7 @@ class Evaluator:
 
         return mae_dict
 
-    def _extracting_mape(self, model: "ModelInterface", data: "Data") -> dict:
+    def _extracting_mape(model: "ModelInterface", data: "Data") -> dict:
         test_period = (
             configs_manner.model_infos["data_test_size_in_days"]
             // configs_manner.model_infos["data_window_size"]
@@ -237,7 +237,7 @@ class Evaluator:
 
         return mape_dict
 
-    def _extracting_r2(self, model: "ModelInterface", data: "Data") -> dict:
+    def _extracting_r2(model: "ModelInterface", data: "Data") -> dict:
 
         test_size = configs_manner.model_infos["data_test_size_in_days"]
 
@@ -256,7 +256,7 @@ class Evaluator:
 
         return r2_dict
 
-    def _extracting_cc(self, model: "ModelInterface", data: "Data") -> dict:
+    def _extracting_cc(model: "ModelInterface", data: "Data") -> dict:
 
         test_size = configs_manner.model_infos["data_test_size_in_days"]
 
