@@ -309,7 +309,6 @@ class Data:
         self.x = None
         self.y = None
         self._y_hat = None
-        self._rmse = None
         self.type_norm = type_norm
         self.step_size = step_size
 
@@ -326,14 +325,6 @@ class Data:
     @y_hat.setter
     def y_hat(self, y_hat_list):
         self._y_hat = y_hat_list
-
-    @property
-    def rmse(self):
-        return self._rmse
-
-    @rmse.setter
-    def rmse(self, rmse_list):
-        self._rmse = rmse_list
 
 
 class Train(Data):
