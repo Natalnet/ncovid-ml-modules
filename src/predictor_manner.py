@@ -28,7 +28,8 @@ class PredictorConstructor:
         self.begin = begin
         self.end = end
         try:
-            self.data_X = self.__data_collector(path, repo, feature, begin, end).x
+            self.data_to_train_model = self.__data_collector(path, repo, feature, begin, end)
+            self.data_X = self.data_to_train_model.x
             self.model = self.__model_assemble(model_id)
             logger.debug_log(
                 self.__class__.__name__,
