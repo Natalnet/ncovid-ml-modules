@@ -47,9 +47,14 @@ def collect_Artificial():
     infos["data_test_size_in_days"] = data["model_configs"]["Artificial"][
         "data_configs"
     ]["data_test_size_in_days"]
-    infos["data_type_norm"] = data["model_configs"]["Artificial"]["data_configs"][
-        "type_norm"
-    ]
+    infos["data_type_norm"] = data["model_configs"]["Artificial"]["data_configs"]["type_norm"]
+    infos["repo"] = data["model_configs"]["Artificial"]["data_configs"]["repo"]
+    infos["path"] = data["model_configs"]["Artificial"]["data_configs"]["path"]
+    infos["input_features"] = data["model_configs"]["Artificial"]["data_configs"]["input_features"]
+    infos["output_features"] = data["model_configs"]["Artificial"]["data_configs"]["output_features"]
+    infos["date_begin"] = data["model_configs"]["Artificial"]["data_configs"]["date_begin"]
+    infos["date_end"] = data["model_configs"]["Artificial"]["data_configs"]["date_end"]
+
     return infos
 
 
@@ -91,6 +96,25 @@ def overwrite_Artificial(metadata):
     model_infos["data_type_norm"] = metadata["model_configs"]["Artificial"][
         "data_configs"
     ]["type_norm"]
+    
+    model_infos["repo"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["repo"]
+    model_infos["path"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["path"]
+    model_infos["input_features"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["input_features"]
+    model_infos["output_features"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["output_features"]
+    model_infos["date_begin"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["date_begin"]
+    model_infos["date_end"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["date_end"]
 
 
 def overwrite(metadata: dict = None):
