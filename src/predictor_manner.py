@@ -78,13 +78,13 @@ class PredictorConstructor:
 
     def predictions_to_weboutput(self, y_hat):
         period = pd.date_range(self.begin, self.end)
-        returned_dictionaty = list()
+        returned_dictionary = list()
         for date, value in zip(period, y_hat):
-            returned_dictionaty.append(
+            returned_dictionary.append(
                 {
                     "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
                     "prediction": str(value),
                 }
             )
 
-        return returned_dictionaty
+        return returned_dictionary
