@@ -69,7 +69,8 @@ class PredictorConstructor:
         data_X = data_X if data_X is not None else self.data_X
         try:
             y_hat = self.model.predicting(data_X)
-            return y_hat.reshape(-1)
+            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+            return y_hat.reshape(-1)[-offset_days:]
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
