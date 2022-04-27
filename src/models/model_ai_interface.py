@@ -21,6 +21,7 @@ from models.model_interface import ModelInterface
 class ModelArtificalInterface(ModelInterface):
     def __init__(self, locale: str):
         super().__init__(locale)
+        self.uuid_model = None
         self.nodes = configs_manner.model_infos["model_nodes"]
         self.epochs = configs_manner.model_infos["model_epochs"]
         self.dropout = configs_manner.model_infos["model_dropout"]
@@ -70,9 +71,13 @@ class ModelArtificalInterface(ModelInterface):
             ) as json_to_save:
                 json.dump(metadata, json_to_save, indent=4)
 
-    def saving(self, model_name):
-        model_id_to_save = self.__model_id_generate()
-        self.model.save(self._resolve_model_name(model_id_to_save))
+    def saving(self, model_name, overwrite=False):
+        if self.uuid_model is None:
+            self.uuid_model = model_id_to_save = self.__model_id_generate()
+        else:
+            model_id_to_save = self.uuid_model
+
+        self.model.save(self._resolve_model_name(model_id_to_save), overwrite)
         self.__saving_metadata_file(model_id_to_save, model_name)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
@@ -93,14 +98,16 @@ class ModelArtificalInterface(ModelInterface):
             )
         except OSError:
             try:
+                uuid_model = self._resolve_model_name(
+                    configs_manner.model_infos["model_id"], True
+                )
                 model_web_content = requests.get(
-                    self._resolve_model_name(
-                        configs_manner.model_infos["model_id"], True
-                    )
+                    self._resolve_model_name(uuid_model)
                 ).content
                 model_bin = io.BytesIO(model_web_content)
                 model_obj = h5py.File(model_bin, "r")
                 self.model = tf.keras.models.load_model(model_obj)
+                self.uuid_model = uuid_model
 
             except OSError as ose:
                 logger.error_log(
