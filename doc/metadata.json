@@ -15,7 +15,7 @@
             "earlystop": 30,
             "is_output_in_input": "True",
             "data_configs": {
-                "is_accumulated_values": "False",
+                "is_apply_differencing": "False",
                 "is_apply_moving_average": "True",
                 "window_size": 7,
                 "data_test_size_in_days": 35,

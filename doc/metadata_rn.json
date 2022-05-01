@@ -15,11 +15,13 @@
             "earlystop": 30,
             "is_output_in_input": "True",
             "data_configs": {
-                "is_accumulated_values": false,
+                "is_apply_differencing": false,
                 "is_apply_moving_average": true,
                 "window_size": 7,
                 "data_test_size_in_days": 35,
                 "type_norm": "",
+                "initial_data_format": "daily",
+                "ended_data_format": "moving-average",
                 "repo": "p971074907",
                 "path": "brl:rn",
                 "input_features": [

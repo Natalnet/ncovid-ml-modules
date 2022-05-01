@@ -285,7 +285,7 @@ class DataConstructor:
             return dataframe_as_list
 
         def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-            if configs_manner.model_infos["data_is_accumulated_values"]:
+            if configs_manner.model_infos["data_is_apply_differencing"]:
                 return dataframe.diff(
                     configs_manner.model_infos["data_window_size"]
                 ).dropna()

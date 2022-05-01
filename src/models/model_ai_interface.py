@@ -65,9 +65,16 @@ class ModelArtificalInterface(ModelInterface):
                     configs_manner.model_type
                 ],
             }
+
+            initial_data_format = ended_data_format = "daily"
+            if configs_manner.model_infos["data_is_apply_differencing"]:
+                initial_data_format = "accumulated"
+            if configs_manner.model_infos["data_is_apply_moving_average"]:
+                ended_data_format = "moving-average"
+
             metadata["model_configs"]["Artificial"]["data_configs"] = {
-                "is_accumulated_values": configs_manner.model_infos[
-                    "data_is_accumulated_values"
+                "is_apply_differencing": configs_manner.model_infos[
+                    "is_apply_differencing"
                 ],
                 "is_apply_moving_average": configs_manner.model_infos[
                     "data_is_apply_moving_average"
@@ -77,6 +84,8 @@ class ModelArtificalInterface(ModelInterface):
                     "data_test_size_in_days"
                 ],
                 "type_norm": configs_manner.model_infos["data_type_norm"],
+                "initial_data_format": initial_data_format,
+                "ended_data_format": ended_data_format,
                 "repo": configs_manner.model_infos["data_repo"],
                 "path": configs_manner.model_infos["data_path"],
                 "input_features": configs_manner.model_infos["data_input_features"],
