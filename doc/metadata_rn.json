@@ -1,0 +1,49 @@
+{
+    "folder_configs": {
+        "model_remote_path": "https://"
+    },
+    "model_configs": {
+        "model_id": "192e04f2-c658-11ec-8f17-48a47252b4f8",
+        "type_used": "Artificial",
+        "is_predicting": false,
+        "Artificial": {
+            "model": "lstm",
+            "nodes": 300,
+            "epochs": 100,
+            "dropout": 0.1,
+            "batch_size": 64,
+            "earlystop": 30,
+            "is_output_in_input": "True",
+            "data_configs": {
+                "is_accumulated_values": false,
+                "is_apply_moving_average": true,
+                "window_size": 7,
+                "data_test_size_in_days": 35,
+                "type_norm": "",
+                "repo": "p971074907",
+                "path": "brl:rn",
+                "input_features": [
+                    "newDeaths",
+                    "newCases"
+                ],
+                "output_features": "newDeaths",
+                "date_begin": "2020-05-01",
+                "date_end": "2022-07-01"
+            },
+            "Autoregressive": {
+                "model": "arima",
+                "p": 1,
+                "d": 1,
+                "q": 1
+            },
+            "Epidemiological": {
+                "model": "sir",
+                "s_initial": 100,
+                "i_initial": 1,
+                "e_initial": 1,
+                "r_initial": 0,
+                "d_initial": 0
+            }
+        }
+    }
+}

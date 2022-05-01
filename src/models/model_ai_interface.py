@@ -65,6 +65,25 @@ class ModelArtificalInterface(ModelInterface):
                     configs_manner.model_type
                 ],
             }
+            metadata["model_configs"]["Artificial"]["data_configs"] = {
+                "is_accumulated_values": configs_manner.model_infos[
+                    "data_is_accumulated_values"
+                ],
+                "is_apply_moving_average": configs_manner.model_infos[
+                    "data_is_apply_moving_average"
+                ],
+                "window_size": configs_manner.model_infos["data_window_size"],
+                "data_test_size_in_days": configs_manner.model_infos[
+                    "data_test_size_in_days"
+                ],
+                "type_norm": configs_manner.model_infos["data_type_norm"],
+                "repo": configs_manner.model_infos["data_repo"],
+                "path": configs_manner.model_infos["data_path"],
+                "input_features": configs_manner.model_infos["data_input_features"],
+                "output_features": configs_manner.model_infos["data_output_features"],
+                "date_begin": configs_manner.model_infos["data_date_begin"],
+                "date_end": configs_manner.model_infos["data_date_end"],
+            }
 
             with open(
                 configs_manner.doc_folder + "metadata" + model_name + ".json", "w"
@@ -89,13 +108,15 @@ class ModelArtificalInterface(ModelInterface):
             ose: Exception OSError if model not found locally or remotely
         """
         try:
-            self.model = (
-                tf.keras.models.load_model(self._resolve_model_name(model_id))
-                if model_id
-                else tf.keras.models.load_model(
+            if model_id is not None:
+                self.model = tf.keras.models.load_model(
+                    self._resolve_model_name(model_id)
+                )
+                self.uuid_model = model_id
+            else:
+                tf.keras.models.load_model(
                     self._resolve_model_name(configs_manner.model_infos["model_id"])
                 )
-            )
         except OSError:
             try:
                 uuid_model = self._resolve_model_name(
