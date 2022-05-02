@@ -21,6 +21,7 @@ from models.model_interface import ModelInterface
 class ModelArtificalInterface(ModelInterface):
     def __init__(self, locale: str):
         super().__init__(locale)
+        self.uuid_model = None
         self.nodes = configs_manner.model_infos["model_nodes"]
         self.epochs = configs_manner.model_infos["model_epochs"]
         self.dropout = configs_manner.model_infos["model_dropout"]
@@ -65,14 +66,46 @@ class ModelArtificalInterface(ModelInterface):
                 ],
             }
 
+            initial_data_format = ended_data_format = "daily"
+            if configs_manner.model_infos["data_is_apply_differencing"]:
+                initial_data_format = "accumulated"
+            if configs_manner.model_infos["data_is_apply_moving_average"]:
+                ended_data_format = "moving-average"
+
+            metadata["model_configs"]["Artificial"]["data_configs"] = {
+                "is_apply_differencing": configs_manner.model_infos[
+                    "data_is_apply_differencing"
+                ],
+                "is_apply_moving_average": configs_manner.model_infos[
+                    "data_is_apply_moving_average"
+                ],
+                "window_size": configs_manner.model_infos["data_window_size"],
+                "data_test_size_in_days": configs_manner.model_infos[
+                    "data_test_size_in_days"
+                ],
+                "type_norm": configs_manner.model_infos["data_type_norm"],
+                "initial_data_format": initial_data_format,
+                "ended_data_format": ended_data_format,
+                "repo": configs_manner.model_infos["data_repo"],
+                "path": configs_manner.model_infos["data_path"],
+                "input_features": configs_manner.model_infos["data_input_features"],
+                "output_features": configs_manner.model_infos["data_output_features"],
+                "date_begin": configs_manner.model_infos["data_date_begin"],
+                "date_end": configs_manner.model_infos["data_date_end"],
+            }
+
             with open(
                 configs_manner.doc_folder + "metadata" + model_name + ".json", "w"
             ) as json_to_save:
                 json.dump(metadata, json_to_save, indent=4)
 
-    def saving(self, model_name):
-        model_id_to_save = self.__model_id_generate()
-        self.model.save(self._resolve_model_name(model_id_to_save))
+    def saving(self, model_name, overwrite=False):
+        if self.uuid_model is None:
+            self.uuid_model = model_id_to_save = self.__model_id_generate()
+        else:
+            model_id_to_save = self.uuid_model
+
+        self.model.save(self._resolve_model_name(model_id_to_save), overwrite)
         self.__saving_metadata_file(model_id_to_save, model_name)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
@@ -84,23 +117,27 @@ class ModelArtificalInterface(ModelInterface):
             ose: Exception OSError if model not found locally or remotely
         """
         try:
-            self.model = (
-                tf.keras.models.load_model(self._resolve_model_name(model_id))
-                if model_id
-                else tf.keras.models.load_model(
+            if model_id is not None:
+                self.model = tf.keras.models.load_model(
+                    self._resolve_model_name(model_id)
+                )
+                self.uuid_model = model_id
+            else:
+                tf.keras.models.load_model(
                     self._resolve_model_name(configs_manner.model_infos["model_id"])
                 )
-            )
         except OSError:
             try:
+                uuid_model = self._resolve_model_name(
+                    configs_manner.model_infos["model_id"], True
+                )
                 model_web_content = requests.get(
-                    self._resolve_model_name(
-                        configs_manner.model_infos["model_id"], True
-                    )
+                    self._resolve_model_name(uuid_model)
                 ).content
                 model_bin = io.BytesIO(model_web_content)
                 model_obj = h5py.File(model_bin, "r")
                 self.model = tf.keras.models.load_model(model_obj)
+                self.uuid_model = uuid_model
 
             except OSError as ose:
                 logger.error_log(

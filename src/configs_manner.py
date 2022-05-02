@@ -35,8 +35,8 @@ def collect_Artificial():
     infos["model_is_output_in_input"] = eval(
         data["model_configs"]["Artificial"]["is_output_in_input"]
     )
-    infos["data_is_accumulated_values"] = eval(
-        data["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
+    infos["data_is_apply_differencing"] = eval(
+        data["model_configs"]["Artificial"]["data_configs"]["is_apply_differencing"]
     )
     infos["data_is_apply_moving_average"] = eval(
         data["model_configs"]["Artificial"]["data_configs"]["is_apply_moving_average"]
@@ -74,8 +74,8 @@ def overwrite_Artificial(metadata):
     model_infos["model_is_output_in_input"] = eval(
         metadata["model_configs"]["Artificial"]["is_output_in_input"]
     )
-    model_infos["data_is_accumulated_values"] = eval(
-        metadata["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
+    model_infos["data_is_apply_differencing"] = eval(
+        metadata["model_configs"]["Artificial"]["data_configs"]["is_apply_differencing"]
     )
     model_infos["data_is_apply_moving_average"] = eval(
         metadata["model_configs"]["Artificial"]["data_configs"][

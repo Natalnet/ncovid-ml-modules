@@ -151,6 +151,19 @@ class DataConstructor:
         train, test = data[:-n_test], data[-n_test:]
         return train, test
 
+    def __updating_data_info_metadata(self, path, repo, features, begin, end):
+        configs_manner.model_infos["data_repo"] = repo
+        configs_manner.model_infos["data_path"] = path
+        start_inputs = (
+            1 if configs_manner.model_infos["model_is_output_in_input"] else 2
+        )
+        configs_manner.model_infos["data_input_features"] = features.split(":")[
+            start_inputs:-1
+        ]
+        configs_manner.model_infos["data_output_features"] = features.split(":")[1]
+        configs_manner.model_infos["data_date_begin"] = begin
+        configs_manner.model_infos["data_date_end"] = end
+
     def collect_dataframe(
         self,
         path: str,
@@ -192,6 +205,8 @@ class DataConstructor:
                     f"end/{end}/as-csv"
                 )
             )
+
+            self.__updating_data_info_metadata(path, repo, feature, begin, end)
         else:
             dataframe = read_file(path)
 
@@ -270,7 +285,7 @@ class DataConstructor:
             return dataframe_as_list
 
         def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-            if configs_manner.model_infos["data_is_accumulated_values"]:
+            if configs_manner.model_infos["data_is_apply_differencing"]:
                 return dataframe.diff(
                     configs_manner.model_infos["data_window_size"]
                 ).dropna()
