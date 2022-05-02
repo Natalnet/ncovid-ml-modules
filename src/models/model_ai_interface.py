@@ -74,7 +74,7 @@ class ModelArtificalInterface(ModelInterface):
 
             metadata["model_configs"]["Artificial"]["data_configs"] = {
                 "is_apply_differencing": configs_manner.model_infos[
-                    "is_apply_differencing"
+                    "data_is_apply_differencing"
                 ],
                 "is_apply_moving_average": configs_manner.model_infos[
                     "data_is_apply_moving_average"
