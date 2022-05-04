@@ -40,6 +40,7 @@ class DataConstructor:
         self.window_size = configs_manner.model_infos["data_window_size"]
         self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
         self.type_norm = configs_manner.model_infos["data_type_norm"]
+        self.moving_average_window_size = configs_manner.model_infos["moving_average_window_size"]
 
     def build_train_test(self, data: np.array or list) -> Tuple["Train", "Test"]:
         """To build train and test data for training and predicting.
@@ -226,10 +227,14 @@ class DataConstructor:
             self.window_size - period_to_add % self.window_size
         )
 
-        new_first_day = begin - datetime.timedelta(days=self.window_size)
-        new_last_day = end + datetime.timedelta(
-            days=offset_days - period_to_add + self.window_size
-        )
+        # buffer days needed to calculate moving average
+        extended_offset_days = offset_days + self.moving_average_window_size
+
+        # last 7-days needed to get predictions
+        new_last_day = end - datetime.timedelta(days=self.window_size)
+
+        # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
+        new_first_day = new_last_day - datetime.timedelta(days=extended_offset_days)
 
         return (
             new_first_day.strftime(DATE_FORMAT),
@@ -239,14 +244,14 @@ class DataConstructor:
     class Preprocessing:
         def __init__(self):
             """
-            Preprocess that sould be applied the data for training and predicting steps
+            Preprocess that should be applied the data for training and predicting steps
             """
             # TO DO
             pass
 
         def pipeline(self, dataframe: pd.DataFrame) -> list:
             """Auto and basic pipeline applied to the data
-            1- Resolve cumulativa columns
+            1- Resolve cumulative columns
             2- Remove columns with any nan values
             3- Remove columns with unique values
             4- Apply moving average
@@ -324,7 +329,6 @@ class Data:
         self.x = None
         self.y = None
         self._y_hat = None
-        self._rmse = None
         self.type_norm = type_norm
         self.step_size = step_size
 
@@ -341,14 +345,6 @@ class Data:
     @y_hat.setter
     def y_hat(self, y_hat_list):
         self._y_hat = y_hat_list
-
-    @property
-    def rmse(self):
-        return self._rmse
-
-    @rmse.setter
-    def rmse(self, rmse_list):
-        self._rmse = rmse_list
 
 
 class Train(Data):
