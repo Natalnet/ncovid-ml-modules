@@ -28,7 +28,8 @@ class PredictorConstructor:
         self.begin = begin
         self.end = end
         try:
-            self.data_X = self.__data_collector(path, repo, feature, begin, end).x
+            self.data_to_train_model = self.__data_collector(path, repo, feature, begin, end)
+            self.data_X = self.data_to_train_model.x
             self.model = self.__model_assemble(model_id)
             logger.debug_log(
                 self.__class__.__name__,
@@ -68,7 +69,8 @@ class PredictorConstructor:
         data_X = data_X if data_X is not None else self.data_X
         try:
             y_hat = self.model.predicting(data_X)
-            return y_hat.reshape(-1)
+            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+            return y_hat.reshape(-1)[-offset_days:]
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
@@ -77,13 +79,13 @@ class PredictorConstructor:
 
     def predictions_to_weboutput(self, y_hat):
         period = pd.date_range(self.begin, self.end)
-        returned_dictionaty = list()
+        returned_dictionary = list()
         for date, value in zip(period, y_hat):
-            returned_dictionaty.append(
+            returned_dictionary.append(
                 {
                     "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
                     "prediction": str(value),
                 }
             )
 
-        return returned_dictionaty
+        return returned_dictionary
