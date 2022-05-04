@@ -35,8 +35,8 @@ def collect_Artificial():
     infos["model_is_output_in_input"] = eval(
         data["model_configs"]["Artificial"]["is_output_in_input"]
     )
-    infos["data_is_accumulated_values"] = eval(
-        data["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
+    infos["data_is_apply_differencing"] = eval(
+        data["model_configs"]["Artificial"]["data_configs"]["is_apply_differencing"]
     )
     infos["data_is_apply_moving_average"] = eval(
         data["model_configs"]["Artificial"]["data_configs"]["is_apply_moving_average"]
@@ -47,9 +47,15 @@ def collect_Artificial():
     infos["data_test_size_in_days"] = data["model_configs"]["Artificial"][
         "data_configs"
     ]["data_test_size_in_days"]
-    infos["data_type_norm"] = data["model_configs"]["Artificial"]["data_configs"][
-        "type_norm"
-    ]
+    infos["data_type_norm"] = data["model_configs"]["Artificial"]["data_configs"]["type_norm"]
+    infos["repo"] = data["model_configs"]["Artificial"]["data_configs"]["repo"]
+    infos["path"] = data["model_configs"]["Artificial"]["data_configs"]["path"]
+    infos["input_features"] = data["model_configs"]["Artificial"]["data_configs"]["input_features"]
+    infos["output_features"] = data["model_configs"]["Artificial"]["data_configs"]["output_features"]
+    infos["date_begin"] = data["model_configs"]["Artificial"]["data_configs"]["date_begin"]
+    infos["date_end"] = data["model_configs"]["Artificial"]["data_configs"]["date_end"]
+    infos["moving_average_window_size"] = data["model_configs"]["Artificial"]["data_configs"]["moving_average_window_size"]
+
     return infos
 
 
@@ -74,8 +80,8 @@ def overwrite_Artificial(metadata):
     model_infos["model_is_output_in_input"] = eval(
         metadata["model_configs"]["Artificial"]["is_output_in_input"]
     )
-    model_infos["data_is_accumulated_values"] = eval(
-        metadata["model_configs"]["Artificial"]["data_configs"]["is_accumulated_values"]
+    model_infos["data_is_apply_differencing"] = eval(
+        metadata["model_configs"]["Artificial"]["data_configs"]["is_apply_differencing"]
     )
     model_infos["data_is_apply_moving_average"] = eval(
         metadata["model_configs"]["Artificial"]["data_configs"][
@@ -91,6 +97,26 @@ def overwrite_Artificial(metadata):
     model_infos["data_type_norm"] = metadata["model_configs"]["Artificial"][
         "data_configs"
     ]["type_norm"]
+    
+    model_infos["repo"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["repo"]
+    model_infos["path"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["path"]
+    model_infos["input_features"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["input_features"]
+    model_infos["output_features"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["output_features"]
+    model_infos["date_begin"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["date_begin"]
+    model_infos["date_end"] = metadata["model_configs"]["Artificial"][
+        "data_configs"
+    ]["date_end"]
+    model_infos["moving_average_window_size"] = metadata["model_configs"]["Artificial"]["data_configs"]["moving_average_window_size"]
 
 
 def overwrite(metadata: dict = None):

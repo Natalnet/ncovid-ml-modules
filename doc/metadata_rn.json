@@ -1,9 +1,9 @@
 {
     "folder_configs": {
-        "model_remot_path": "https://"
+        "model_remote_path": "https://"
     },
     "model_configs": {
-        "model_id": "15ce5f24-b4e1-11ec-9d4f-48a47252b4f8",
+        "model_id": "192e04f2-c658-11ec-8f17-48a47252b4f8",
         "type_used": "Artificial",
         "is_predicting": false,
         "Artificial": {
@@ -15,11 +15,22 @@
             "earlystop": 30,
             "is_output_in_input": "True",
             "data_configs": {
-                "is_apply_differencing": "False",
-                "is_apply_moving_average": "True",
+                "is_apply_differencing": false,
+                "is_apply_moving_average": true,
                 "window_size": 7,
                 "data_test_size_in_days": 35,
-                "type_norm": ""
+                "type_norm": "",
+                "initial_data_format": "daily",
+                "ended_data_format": "moving-average",
+                "repo": "p971074907",
+                "path": "brl:rn",
+                "input_features": [
+                    "newDeaths",
+                    "newCases"
+                ],
+                "output_features": "newDeaths",
+                "date_begin": "2020-05-01",
+                "date_end": "2022-07-01"
             },
             "Autoregressive": {
                 "model": "arima",

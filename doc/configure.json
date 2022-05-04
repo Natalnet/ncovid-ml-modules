@@ -15,17 +15,24 @@
     "Artificial": {
       "model": "lstm",
       "nodes": 300,
-      "epochs": 100,
-      "dropout": 0.1,
+      "epochs": 300,
+      "dropout": 0.05,
       "batch_size": 64,
-      "earlystop": 30,
+      "earlystop": 50,
       "is_output_in_input": "True",
       "data_configs": {
-        "is_accumulated_values": "False",
+        "is_apply_differencing": "False",
         "is_apply_moving_average": "True",
+        "moving_average_window_size": 7,
         "window_size": 7,
         "data_test_size_in_days": 35,
-        "type_norm": ""
+        "type_norm": "",
+        "repo": "p971074907",
+        "path": "brl:rn",
+        "input_features": "newDeaths",
+        "output_features": "newDeaths",
+        "date_begin": "2020-05-01",
+        "date_end": "2022-04-17"
       },
       "Autoregressive": {
         "model": "arima",
