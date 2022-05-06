@@ -44,12 +44,10 @@ class DataConstructor:
 
     def build_train_test(self, data: np.array or list) -> Tuple["Train", "Test"]:
         """To build train and test data for training and predicting.
-
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
             The first dimension represents the number of features. 
             The second dimension represents the time-serie of each dimension. 
-
         Returns:
             Train, Test: Train and Test data types
         """
@@ -63,12 +61,10 @@ class DataConstructor:
 
     def build_train(self, data: np.array or list) -> "Train":
         """To build train data for training.
-
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
             The first dimension represents the number of features. 
             The second dimension represents the time-serie of each dimension. 
-
         Returns:
             Train: Train data type 
         """
@@ -87,12 +83,10 @@ class DataConstructor:
 
     def build_test(self, data: np.array or list) -> "Test":
         """To build test data for predicting.
-
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
             The first dimension represents the number of features. 
             The second dimension represents the time-serie of each dimension. 
-
         Returns:
             Test: Test data type 
         """
@@ -119,9 +113,13 @@ class DataConstructor:
         def __windowing_data(data):
             if data.shape[0] < data.shape[1]:
                 data = data.T
-            check_size = data.shape[0] // self.window_size
-            if check_size * self.window_size != data.shape[0]:
-                data = data[: check_size * self.window_size]
+            #check_size = data.shape[0] // self.window_size
+            leftover = data.shape[0] % self.window_size
+            #print(data.shape[0], self.window_size, check_size)
+            if leftover != 0:
+                #data = data[: check_size * self.window_size]
+                # if needed, remove values from head
+                data = data[leftover:]
             return np.array(np.split(data, len(data) // self.window_size))
 
         # if self.is_predicting:
@@ -134,12 +132,10 @@ class DataConstructor:
 
     def split_data_train_test(self, data: list) -> Tuple[list, list]:
         """Split a numpy bi-dimensional array in train and test.
-
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
             The first dimension represents the number of features. 
             The second dimension represents the time-serie of each dimension. 
-
         Returns:
             train and test (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
         """
@@ -182,7 +178,6 @@ class DataConstructor:
                 Defaults to None.
             begin (str, optional): First day of the temporal time series `YYYY-MM-DD`. Defaults to None.
             end (str, optional): Last day of the temporal time series `YYYY-MM-DD`. Defaults to None.
-
         Returns:
             dataframe: Pandas dataframe
         """
@@ -212,7 +207,14 @@ class DataConstructor:
             dataframe = read_file(path)
 
         preprocessor = self.Preprocessing()
-        return preprocessor.pipeline(dataframe)
+        collected_data = preprocessor.pipeline(dataframe)
+
+        if self.is_predicting:
+            # remove head buffer values due to MA
+            # TODO this 7 is actually the ma_window_size
+            collected_data[0] = collected_data[0][7:]
+            
+        return collected_data
 
     def __add_period(self, begin: str, end: str):
         import datetime
@@ -231,14 +233,15 @@ class DataConstructor:
         extended_offset_days = offset_days + self.moving_average_window_size
 
         # last 7-days needed to get predictions
-        new_last_day = end - datetime.timedelta(days=self.window_size)
+        # new_last_day = end - datetime.timedelta(days=self.window_size)
+        self.new_last_day = end
 
         # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
-        new_first_day = new_last_day - datetime.timedelta(days=extended_offset_days)
+        self.new_first_day = self.new_last_day - datetime.timedelta(days=extended_offset_days)
 
         return (
-            new_first_day.strftime(DATE_FORMAT),
-            new_last_day.strftime(DATE_FORMAT),
+            self.new_first_day.strftime(DATE_FORMAT),
+            self.new_last_day.strftime(DATE_FORMAT),
         )
 
     class Preprocessing:
@@ -256,10 +259,8 @@ class DataConstructor:
             3- Remove columns with unique values
             4- Apply moving average
             5- Convert dataframe to list
-
             Args:
                 dataframe (pandas): Temporal time series
-
             Returns:
                 list: Preprocessed dataframe as list
             """
@@ -350,7 +351,6 @@ class Data:
 class Train(Data):
     def __init__(self, data: np.array, step_size: int = None, type_norm: str = None):
         """Data Train Object. Use the attribute `model_type` in `docs/configure.json` to determine the type of data should be expected.
-
         Args:
             data (np.array): Temporal serie used as train data
             step_size (int, optional): Indicates the size of each data sample. Defaults to None.
@@ -409,7 +409,6 @@ class Train(Data):
 class Test(Data):
     def __init__(self, data, step_size: int = None, type_norm: str = None):
         """Data Test Object. Use the attribute `model_type` in `docs/configure.json` to determine the type of data should be expected
-
         Args:
             data (np.array): Temporal serie used as test data
             step_size (int, optional): Indicates the size of each data sample. Defaults to None.

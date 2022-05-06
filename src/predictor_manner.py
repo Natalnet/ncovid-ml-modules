@@ -13,7 +13,6 @@ exec(
 class PredictorConstructor:
     def __init__(self, model_id, path, repo=None, feature=None, begin=None, end=None):
         """Predictor designed to forecast values through trained models.
-
         Args:
             path (string): [description]
             repo (string, optional): The key number of the repository to data acquisition. Defaults to None.
@@ -59,10 +58,8 @@ class PredictorConstructor:
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
-
         Args:
             data_X (data.x, optional): data.x variable to predict. Defaults to None.
-
         Returns:
             string: A string containing the forecasting values and them respective date. 
         """
