@@ -18,11 +18,11 @@ class DataConstructor:
         """
 
         self.is_predicting = (
-            is_predicting if is_predicting else configs_manner.model_is_predicting
+            is_predicting if is_predicting else configs_manner.is_predicting
         )
 
         try:
-            getattr(self, f"_constructor_{configs_manner.model_type}")()
+            getattr(self, f"_constructor_{configs_manner.type_used}")()
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
@@ -30,17 +30,17 @@ class DataConstructor:
             raise
 
     def _constructor_Autoregressive(self):
-        self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
+        self.test_size_in_days = configs_manner.data_test_size_in_days
 
     def _constructor_Epidemiological(self):
         # TO DO
         pass
 
     def _constructor_Artificial(self):
-        self.window_size = configs_manner.model_infos["data_window_size"]
-        self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
-        self.type_norm = configs_manner.model_infos["data_type_norm"]
-        self.moving_average_window_size = configs_manner.model_infos["moving_average_window_size"]
+        self.window_size = configs_manner.window_size
+        self.test_size_in_days = configs_manner.data_test_size_in_days
+        self.type_norm = configs_manner.type_norm
+        self.moving_average_window_size = configs_manner.moving_average_window_size
 
     def build_train_test(self, data: np.array or list) -> Tuple["Train", "Test"]:
         """To build train and test data for training and predicting.
@@ -76,7 +76,7 @@ class DataConstructor:
             self.__class__.__name__, self.build_train.__name__, "Format data",
         )
         try:
-            return getattr(self, f"_build_data_{configs_manner.model_type}")(
+            return getattr(self, f"_build_data_{configs_manner.type_used}")(
                 Train, data
             )
         except Exception as e:
@@ -100,7 +100,7 @@ class DataConstructor:
             self.__class__.__name__, self.build_test.__name__, "Format data",
         )
         try:
-            return getattr(self, f"_build_data_{configs_manner.model_type}")(Test, data)
+            return getattr(self, f"_build_data_{configs_manner.type_used}")(Test, data)
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.build_test.__name__, f"Error: {e}."
@@ -153,17 +153,13 @@ class DataConstructor:
         return train, test
 
     def __updating_data_info_metadata(self, path, repo, features, begin, end):
-        configs_manner.model_infos["data_repo"] = repo
-        configs_manner.model_infos["data_path"] = path
-        start_inputs = (
-            1 if configs_manner.model_infos["model_is_output_in_input"] else 2
-        )
-        configs_manner.model_infos["data_input_features"] = features.split(":")[
-            start_inputs:-1
-        ]
-        configs_manner.model_infos["data_output_features"] = features.split(":")[1]
-        configs_manner.model_infos["data_date_begin"] = begin
-        configs_manner.model_infos["data_date_end"] = end
+        configs_manner.add_variable_to_globals("data_repo", repo)
+        configs_manner.add_variable_to_globals("data_path", path)
+        start_inputs = (1 if configs_manner.is_output_in_input else 2)
+        configs_manner.add_variable_to_globals("data_input_features", features.split(":")[start_inputs:-1])
+        configs_manner.add_variable_to_globals("data_output_features", features.split(":")[1])
+        configs_manner.add_variable_to_globals("data_date_begin", begin)
+        configs_manner.add_variable_to_globals("data_date_end", end)
 
     def collect_dataframe(
         self,
@@ -290,16 +286,16 @@ class DataConstructor:
             return dataframe_as_list
 
         def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-            if configs_manner.model_infos["data_is_apply_differencing"]:
+            if configs_manner.is_apply_differencing:
                 return dataframe.diff(
-                    configs_manner.model_infos["data_window_size"]
+                    configs_manner.window_size
                 ).dropna()
             return dataframe
 
         def moving_average(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-            if configs_manner.model_infos["data_is_apply_moving_average"]:
+            if configs_manner.is_apply_moving_average:
                 return (
-                    dataframe.rolling(configs_manner.model_infos["data_window_size"])
+                    dataframe.rolling(configs_manner.window_size)
                     .mean()
                     .fillna(method="bfill")
                     .fillna(method="ffill")
@@ -359,7 +355,7 @@ class Train(Data):
         try:
             super().__init__(step_size, type_norm)
             self.x, self.y = getattr(
-                self, f"_builder_train_{configs_manner.model_type}"
+                self, f"_builder_train_{configs_manner.type_used}"
             )(data)
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Train Created"
@@ -398,9 +394,9 @@ class Train(Data):
 
         x, y = __walk_forward(data)
 
-        x = x if configs_manner.model_infos["model_is_output_in_input"] else x[:, :, 1:]
+        x = x if configs_manner.is_output_in_input else x[:, :, 1:]
 
-        configs_manner.model_infos["data_n_features"] = x.shape[-1]
+        configs_manner.add_variable_to_globals("data_n_features", x.shape[-1])
         y = y.reshape((y.shape[0], y.shape[1], 1))
 
         return x, y
@@ -418,7 +414,7 @@ class Test(Data):
         try:
             super().__init__(step_size, type_norm)
             self.x, self.y = getattr(
-                self, f"_builder_test_{configs_manner.model_type}"
+                self, f"_builder_test_{configs_manner.type_used}"
             )(data)
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Test Created"
@@ -440,11 +436,11 @@ class Test(Data):
 
         x = (
             data[:-1, :, :]
-            if configs_manner.model_infos["model_is_output_in_input"]
+            if configs_manner.is_output_in_input
             else data[:-1, :, 1:]
         )
 
-        configs_manner.model_infos["data_n_features"] = x.shape[-1]
+        configs_manner.add_variable_to_globals("data_n_features", x.shape[-1])
 
         y = data[1:, :, :1]
         y = y.reshape((y.shape[0], y.shape[1], 1))
