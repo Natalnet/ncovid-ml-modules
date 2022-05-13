@@ -20,6 +20,7 @@ class DataConstructor:
         self.is_predicting = (
             is_predicting if is_predicting else configs_manner.model_is_predicting
         )
+        self.extrapolate = False
 
         try:
             getattr(self, f"_constructor_{configs_manner.model_type}")()
@@ -82,7 +83,7 @@ class DataConstructor:
             raise
 
     def build_test(self, data: np.array or list) -> "Test":
-        """To build test data for predicting.
+        """To build test data for model evaluation.
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
             The first dimension represents the number of features. 
@@ -101,6 +102,26 @@ class DataConstructor:
             )
             raise
 
+    def build_predict(self, data: np.array or list) -> "Test":
+        """To build data for predicting.
+        Args:
+            data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
+            The first dimension represents the number of features. 
+            The second dimension represents the time-serie of each dimension. 
+        Returns:
+            Test: Test data type 
+        """
+        assert type(data) == np.ndarray or type(data) == list, logger.error_log(
+            self.__class__.__name__, self.build_predict.__name__, "Format data",
+        )
+        try:
+            return getattr(self, f"_build_data_{configs_manner.model_type}")(Test, data)
+        except Exception as e:
+            logger.error_log(
+                self.__class__.__name__, self.build_predict.__name__, f"Error: {e}."
+            )
+            raise
+
     def _build_data_Autoregressive(self, data_type, data):
         # TO DO
         pass
@@ -110,21 +131,21 @@ class DataConstructor:
         pass
 
     def _build_data_Artificial(self, data_type, data):
-        def __windowing_data(data):
+        def __windowing_data(self, data):
+            import datetime
             if data.shape[0] < data.shape[1]:
                 data = data.T
-            #check_size = data.shape[0] // self.window_size
             leftover = data.shape[0] % self.window_size
-            #print(data.shape[0], self.window_size, check_size)
             if leftover != 0:
-                #data = data[: check_size * self.window_size]
                 # if needed, remove values from head
                 data = data[leftover:]
+            # update data_x first day (not working)
+            self.data_x_first_day = self.new_first_day - datetime.timedelta(leftover)
             return np.array(np.split(data, len(data) // self.window_size))
 
         # if self.is_predicting:
         data = self.__transpose_data(data)
-        data = __windowing_data(data)
+        data = __windowing_data(self, data)
         return data_type(data, self.window_size, self.type_norm)
 
     def __transpose_data(self, data):
@@ -207,14 +228,28 @@ class DataConstructor:
             dataframe = read_file(path)
 
         preprocessor = self.Preprocessing()
-        collected_data = preprocessor.pipeline(dataframe)
+        _processed_data = preprocessor.pipeline(dataframe)
+        self.processed_data_raw = _processed_data[0]
 
+        # check if end is greater than last available forecast (last_day from datamanger + output_window)
         if self.is_predicting:
-            # remove head buffer values due to MA
-            # TODO this 7 is actually the ma_window_size
-            collected_data[0] = collected_data[0][7:]
-            
-        return collected_data
+            import datetime
+            DATE_FORMAT = "%Y-%m-%d"
+            _end = datetime.datetime.strptime(end, DATE_FORMAT)
+            _df_end = dataframe.index[-1]
+            max_predict_date = _df_end + datetime.timedelta(days=7)
+            if _end > max_predict_date:
+                self.extrapolate_last_day = max_predict_date
+                self.new_last_day = self.extrapolate_last_day
+            else:
+                # remove last input_window_size days
+                # TODO replace 7 with input_window_size
+                _processed_data[0] = _processed_data[0][:-7]
+                self.interpolate_last_day = self.new_last_day - datetime.timedelta(days=7)
+                self.new_last_day = self.interpolate_last_day
+
+        self.processed_data_new = _processed_data[0]
+        return _processed_data
 
     def __add_period(self, begin: str, end: str):
         import datetime
@@ -229,11 +264,10 @@ class DataConstructor:
             self.window_size - period_to_add % self.window_size
         )
 
-        # buffer days needed to calculate moving average
-        extended_offset_days = offset_days + self.moving_average_window_size
+        # buffer days needed to account for moving average (first MA_window days are n/a)
+        extended_offset_days = offset_days + self.moving_average_window_size + 10
 
         # last 7-days needed to get predictions
-        # new_last_day = end - datetime.timedelta(days=self.window_size)
         self.new_last_day = end
 
         # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
@@ -438,10 +472,25 @@ class Test(Data):
     def _builder_test_Artificial(self, data):
 
         x = (
-            data[:-1, :, :]
-            if configs_manner.model_infos["model_is_output_in_input"]
-            else data[:-1, :, 1:]
-        )
+                data[:-1, :, :]
+                if configs_manner.model_infos["model_is_output_in_input"]
+                else data[:-1, :, 1:]
+            )
+
+        configs_manner.model_infos["data_n_features"] = x.shape[-1]
+
+        y = data[1:, :, :1]
+        y = y.reshape((y.shape[0], y.shape[1], 1))
+
+        return x, y
+
+    def _builder_predict_Artificial(self, data):
+
+        x = (
+                data[:, :, :]
+                if configs_manner.model_infos["model_is_output_in_input"]
+                else data[:, :, 1:]
+            )
 
         configs_manner.model_infos["data_n_features"] = x.shape[-1]
 
