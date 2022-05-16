@@ -471,27 +471,12 @@ class Test(Data):
     def _builder_test_Artificial(self, data):
 
         x = (
-            data[:-1, :, :]
+            data[:, :, :]
             if configs_manner.is_output_in_input
-            else data[:-1, :, 1:]
+            else data[:, :, 1:]
         )
 
         configs_manner.add_variable_to_globals("data_n_features", x.shape[-1])
-
-        y = data[1:, :, :1]
-        y = y.reshape((y.shape[0], y.shape[1], 1))
-
-        return x, y
-
-    def _builder_predict_Artificial(self, data):
-
-        x = (
-                data[:, :, :]
-                if configs_manner.model_infos["model_is_output_in_input"]
-                else data[:, :, 1:]
-            )
-
-        configs_manner.model_infos["data_n_features"] = x.shape[-1]
 
         y = data[1:, :, :1]
         y = y.reshape((y.shape[0], y.shape[1], 1))
