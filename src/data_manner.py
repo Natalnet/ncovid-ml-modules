@@ -18,11 +18,11 @@ class DataConstructor:
         """
 
         self.is_predicting = (
-            is_predicting if is_predicting else configs_manner.model_is_predicting
+            is_predicting if is_predicting else configs_manner.is_predicting
         )
 
         try:
-            getattr(self, f"_constructor_{configs_manner.model_type}")()
+            getattr(self, f"_constructor_{configs_manner.type_used}")()
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
@@ -30,17 +30,17 @@ class DataConstructor:
             raise
 
     def _constructor_Autoregressive(self):
-        self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
+        self.test_size_in_days = configs_manner.data_test_size_in_days
 
     def _constructor_Epidemiological(self):
         # TO DO
         pass
 
     def _constructor_Artificial(self):
-        self.window_size = configs_manner.model_infos["data_window_size"]
-        self.test_size_in_days = configs_manner.model_infos["data_test_size_in_days"]
-        self.type_norm = configs_manner.model_infos["data_type_norm"]
-        self.moving_average_window_size = configs_manner.model_infos["moving_average_window_size"]
+        self.input_window_size = configs_manner.input_window_size
+        self.test_size_in_days = configs_manner.data_test_size_in_days
+        self.type_norm = configs_manner.type_norm
+        self.moving_average_window_size = configs_manner.moving_average_window_size
 
     def build_train_test(self, data: np.array or list) -> Tuple["Train", "Test"]:
         """To build train and test data for training and predicting.
@@ -75,8 +75,9 @@ class DataConstructor:
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_train.__name__, "Format data",
         )
+        assert (configs_manner.input_window_size - configs_manner.overlap_in_samples) >= 1, "invalid overlap value"
         try:
-            return getattr(self, f"_build_data_{configs_manner.model_type}")(
+            return getattr(self, f"_build_data_{configs_manner.type_used}")(
                 Train, data
             )
         except Exception as e:
@@ -100,7 +101,7 @@ class DataConstructor:
             self.__class__.__name__, self.build_test.__name__, "Format data",
         )
         try:
-            return getattr(self, f"_build_data_{configs_manner.model_type}")(Test, data)
+            return getattr(self, f"_build_data_{configs_manner.type_used}")(Test, data)
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.build_test.__name__, f"Error: {e}."
@@ -119,15 +120,15 @@ class DataConstructor:
         def __windowing_data(data):
             if data.shape[0] < data.shape[1]:
                 data = data.T
-            check_size = data.shape[0] // self.window_size
-            if check_size * self.window_size != data.shape[0]:
-                data = data[: check_size * self.window_size]
-            return np.array(np.split(data, len(data) // self.window_size))
+            check_size = data.shape[0] // self.input_window_size
+            if check_size * self.input_window_size != data.shape[0]:
+                data = data[: check_size * self.input_window_size]
+            return np.array(np.split(data, len(data) // self.input_window_size))
 
         # if self.is_predicting:
         data = self.__transpose_data(data)
         data = __windowing_data(data)
-        return data_type(data, self.window_size, self.type_norm)
+        return data_type(data, self.input_window_size, self.type_norm)
 
     def __transpose_data(self, data):
         return np.array(data).T
@@ -144,26 +145,22 @@ class DataConstructor:
             train and test (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
         """
         # makes dataset multiple of n_days
-        data = data[data.shape[0] % self.window_size :]
+        data = data[data.shape[0] % self.input_window_size :]
         # make test set multiple of n_days
         n_test = self.test_size_in_days
-        n_test -= self.test_size_in_days % self.window_size
+        n_test -= self.test_size_in_days % self.input_window_size
         # split into standard weeks
         train, test = data[:-n_test], data[-n_test:]
         return train, test
 
     def __updating_data_info_metadata(self, path, repo, features, begin, end):
-        configs_manner.model_infos["data_repo"] = repo
-        configs_manner.model_infos["data_path"] = path
-        start_inputs = (
-            1 if configs_manner.model_infos["model_is_output_in_input"] else 2
-        )
-        configs_manner.model_infos["data_input_features"] = features.split(":")[
-            start_inputs:-1
-        ]
-        configs_manner.model_infos["data_output_features"] = features.split(":")[1]
-        configs_manner.model_infos["data_date_begin"] = begin
-        configs_manner.model_infos["data_date_end"] = end
+        configs_manner.add_variable_to_globals("data_repo", repo)
+        configs_manner.add_variable_to_globals("data_path", path)
+        start_inputs = (1 if configs_manner.is_output_in_input else 2)
+        configs_manner.add_variable_to_globals("data_input_features", features.split(":")[start_inputs:-1])
+        configs_manner.add_variable_to_globals("data_output_features", features.split(":")[1])
+        configs_manner.add_variable_to_globals("data_date_begin", begin)
+        configs_manner.add_variable_to_globals("data_date_end", end)
 
     def collect_dataframe(
         self,
@@ -224,14 +221,14 @@ class DataConstructor:
 
         period_to_add = (end - begin + datetime.timedelta(days=1)).days
         offset_days = period_to_add + (
-            self.window_size - period_to_add % self.window_size
+            self.input_window_size - period_to_add % self.input_window_size
         )
 
         # buffer days needed to calculate moving average
         extended_offset_days = offset_days + self.moving_average_window_size
 
         # last 7-days needed to get predictions
-        new_last_day = end - datetime.timedelta(days=self.window_size)
+        new_last_day = end - datetime.timedelta(days=self.input_window_size)
 
         # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
         new_first_day = new_last_day - datetime.timedelta(days=extended_offset_days)
@@ -290,16 +287,16 @@ class DataConstructor:
             return dataframe_as_list
 
         def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-            if configs_manner.model_infos["data_is_apply_differencing"]:
+            if configs_manner.is_apply_differencing:
                 return dataframe.diff(
-                    configs_manner.model_infos["data_window_size"]
+                    configs_manner.input_window_size
                 ).dropna()
             return dataframe
 
         def moving_average(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-            if configs_manner.model_infos["data_is_apply_moving_average"]:
+            if configs_manner.is_apply_moving_average:
                 return (
-                    dataframe.rolling(configs_manner.model_infos["data_window_size"])
+                    dataframe.rolling(configs_manner.input_window_size)
                     .mean()
                     .fillna(method="bfill")
                     .fillna(method="ffill")
@@ -359,7 +356,7 @@ class Train(Data):
         try:
             super().__init__(step_size, type_norm)
             self.x, self.y = getattr(
-                self, f"_builder_train_{configs_manner.model_type}"
+                self, f"_builder_train_{configs_manner.type_used}"
             )(data)
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Train Created"
@@ -393,14 +390,14 @@ class Train(Data):
                     x.append(data[in_start:in_end, :])
                     y.append(data[in_end:out_end, 0])
                 # move along one time step
-                in_start += 1
+                in_start += self.step_size - configs_manner.overlap_in_samples
             return np.array(x), np.array(y)
 
         x, y = __walk_forward(data)
 
-        x = x if configs_manner.model_infos["model_is_output_in_input"] else x[:, :, 1:]
+        x = x if configs_manner.is_output_in_input else x[:, :, 1:]
 
-        configs_manner.model_infos["data_n_features"] = x.shape[-1]
+        configs_manner.add_variable_to_globals("data_n_features", x.shape[-1])
         y = y.reshape((y.shape[0], y.shape[1], 1))
 
         return x, y
@@ -418,7 +415,7 @@ class Test(Data):
         try:
             super().__init__(step_size, type_norm)
             self.x, self.y = getattr(
-                self, f"_builder_test_{configs_manner.model_type}"
+                self, f"_builder_test_{configs_manner.type_used}"
             )(data)
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Test Created"
@@ -440,11 +437,11 @@ class Test(Data):
 
         x = (
             data[:-1, :, :]
-            if configs_manner.model_infos["model_is_output_in_input"]
+            if configs_manner.is_output_in_input
             else data[:-1, :, 1:]
         )
 
-        configs_manner.model_infos["data_n_features"] = x.shape[-1]
+        configs_manner.add_variable_to_globals("data_n_features", x.shape[-1])
 
         y = data[1:, :, :1]
         y = y.reshape((y.shape[0], y.shape[1], 1))

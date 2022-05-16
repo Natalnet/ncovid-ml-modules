@@ -6,7 +6,7 @@ import data_manner
 import configs_manner
 
 exec(
-    f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
+    f"from models.{configs_manner.type_used.lower()} import {configs_manner.model}_manner as model_manner"
 )
 
 
@@ -42,7 +42,7 @@ class PredictorConstructor:
             )
 
     def __get_model_obj(self, model_id):
-        model = "Model" + str(configs_manner.model_subtype.upper())
+        model = "Model" + str(configs_manner.model.upper())
         return getattr(model_manner, model)(model_id)
 
     def __model_assemble(self, model_id):
