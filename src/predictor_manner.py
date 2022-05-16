@@ -13,7 +13,6 @@ exec(
 class PredictorConstructor:
     def __init__(self, model_id, path, repo=None, feature=None, begin=None, end=None):
         """Predictor designed to forecast values through trained models.
-
         Args:
             path (string): [description]
             repo (string, optional): The key number of the repository to data acquisition. Defaults to None.
@@ -27,6 +26,7 @@ class PredictorConstructor:
         self.feature = feature
         self.begin = begin
         self.end = end
+        self.raw_y_hat = None
         try:
             self.data_to_train_model = self.__data_collector(path, repo, feature, begin, end)
             self.data_X = self.data_to_train_model.x
@@ -55,21 +55,22 @@ class PredictorConstructor:
         data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
-        return data_constructor.build_test(data_collected)
+        # if predcting, update last possible day for prediction
+        self.end = str(data_constructor.new_last_day.date())
+        return data_constructor.build_predict(data_collected)
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
-
         Args:
             data_X (data.x, optional): data.x variable to predict. Defaults to None.
-
         Returns:
             string: A string containing the forecasting values and them respective date. 
         """
         data_X = data_X if data_X is not None else self.data_X
         try:
             y_hat = self.model.predicting(data_X)
-            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+            self.raw_y_hat = y_hat.reshape(-1)
+            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days
             return y_hat.reshape(-1)[-offset_days:]
         except Exception as e:
             logger.error_log(
