@@ -214,11 +214,13 @@ class DataConstructor:
                     f"http://ncovid.natalnet.br/datamanager/"
                     f"repo/{repo}/"
                     f"path/{path}/"
-                    f"feature/{feature}/"
+                    f"features/{feature}/"
+                    f"window-size/{configs_manner.moving_average_window_size}/"
                     f"begin/{begin}/"
                     f"end/{end}/as-csv"
                 )
             )
+            
 
             self.__updating_data_info_metadata(path, repo, feature, begin, end)
         else:
@@ -265,7 +267,7 @@ class DataConstructor:
         extended_offset_days = offset_days + self.moving_average_window_size + 10
 
         # last 7-days needed to get predictions
-        new_last_day = end - datetime.timedelta(days=self.input_window_size)
+        self.new_last_day = end - datetime.timedelta(days=self.input_window_size)
 
         # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
         self.new_first_day = self.new_last_day - datetime.timedelta(days=extended_offset_days)
