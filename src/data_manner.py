@@ -37,7 +37,7 @@ class DataConstructor:
         pass
 
     def _constructor_Artificial(self):
-        self.window_size = configs_manner.window_size
+        self.input_window_size = configs_manner.input_window_size
         self.test_size_in_days = configs_manner.data_test_size_in_days
         self.type_norm = configs_manner.type_norm
         self.moving_average_window_size = configs_manner.moving_average_window_size
@@ -75,6 +75,7 @@ class DataConstructor:
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
             self.__class__.__name__, self.build_train.__name__, "Format data",
         )
+        assert (configs_manner.input_window_size - configs_manner.overlap_in_samples) >= 1, "invalid overlap value"
         try:
             return getattr(self, f"_build_data_{configs_manner.type_used}")(
                 Train, data
@@ -119,15 +120,15 @@ class DataConstructor:
         def __windowing_data(data):
             if data.shape[0] < data.shape[1]:
                 data = data.T
-            check_size = data.shape[0] // self.window_size
-            if check_size * self.window_size != data.shape[0]:
-                data = data[: check_size * self.window_size]
-            return np.array(np.split(data, len(data) // self.window_size))
+            check_size = data.shape[0] // self.input_window_size
+            if check_size * self.input_window_size != data.shape[0]:
+                data = data[: check_size * self.input_window_size]
+            return np.array(np.split(data, len(data) // self.input_window_size))
 
         # if self.is_predicting:
         data = self.__transpose_data(data)
         data = __windowing_data(data)
-        return data_type(data, self.window_size, self.type_norm)
+        return data_type(data, self.input_window_size, self.type_norm)
 
     def __transpose_data(self, data):
         return np.array(data).T
@@ -144,10 +145,10 @@ class DataConstructor:
             train and test (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
         """
         # makes dataset multiple of n_days
-        data = data[data.shape[0] % self.window_size :]
+        data = data[data.shape[0] % self.input_window_size :]
         # make test set multiple of n_days
         n_test = self.test_size_in_days
-        n_test -= self.test_size_in_days % self.window_size
+        n_test -= self.test_size_in_days % self.input_window_size
         # split into standard weeks
         train, test = data[:-n_test], data[-n_test:]
         return train, test
@@ -220,14 +221,14 @@ class DataConstructor:
 
         period_to_add = (end - begin + datetime.timedelta(days=1)).days
         offset_days = period_to_add + (
-            self.window_size - period_to_add % self.window_size
+            self.input_window_size - period_to_add % self.input_window_size
         )
 
         # buffer days needed to calculate moving average
         extended_offset_days = offset_days + self.moving_average_window_size
 
         # last 7-days needed to get predictions
-        new_last_day = end - datetime.timedelta(days=self.window_size)
+        new_last_day = end - datetime.timedelta(days=self.input_window_size)
 
         # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
         new_first_day = new_last_day - datetime.timedelta(days=extended_offset_days)
@@ -288,14 +289,14 @@ class DataConstructor:
         def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             if configs_manner.is_apply_differencing:
                 return dataframe.diff(
-                    configs_manner.window_size
+                    configs_manner.input_window_size
                 ).dropna()
             return dataframe
 
         def moving_average(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             if configs_manner.is_apply_moving_average:
                 return (
-                    dataframe.rolling(configs_manner.window_size)
+                    dataframe.rolling(configs_manner.input_window_size)
                     .mean()
                     .fillna(method="bfill")
                     .fillna(method="ffill")
@@ -389,7 +390,7 @@ class Train(Data):
                     x.append(data[in_start:in_end, :])
                     y.append(data[in_end:out_end, 0])
                 # move along one time step
-                in_start += 1
+                in_start += self.step_size - configs_manner.overlap_in_samples
             return np.array(x), np.array(y)
 
         x, y = __walk_forward(data)

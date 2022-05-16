@@ -28,7 +28,8 @@ class ModelArtificalInterface(ModelInterface):
         self.batch_size = configs_manner.batch_size
         self.is_output_in_input = configs_manner.is_output_in_input
         self.is_predicting = configs_manner.is_predicting
-        self.data_window_size = configs_manner.window_size
+        self.data_window_size = configs_manner.input_window_size
+        self.output_window_size = configs_manner.output_window_size
         self.earlystop = EarlyStopping(
             monitor="loss",
             mode="min",
