@@ -57,7 +57,7 @@ class PredictorConstructor:
         )
         # if predcting, update last possible day for prediction
         self.end = str(data_constructor.new_last_day.date())
-        return data_constructor.build_predict(data_collected)
+        return data_constructor.build_test(data_collected)
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
