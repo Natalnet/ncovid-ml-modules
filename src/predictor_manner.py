@@ -60,12 +60,17 @@ class PredictorConstructor:
 
     def __get_periods_from_data_constructor(self, data_constructor):
         # TODO better way to get this variables from data_constructor
+        # _raw -> date range from raw data
         self.begin_raw = str(data_constructor.begin_raw.date())
         self.end_raw = str(data_constructor.end_raw.date())
-        self.begin_forecast = str(data_constructor.begin_forecast.date())
-        self.end_forecast = str(data_constructor.end_forecast.date())
+        
         self.number_of_days_requested = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
         self.number_of_days_available = (datetime.datetime.strptime(self.end_raw, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_raw, "%Y-%m-%d")).days + 1
+        self.leftover = self.number_of_days_available % configs_manner.input_window_size
+        
+        # _forecast -> date range used as input in model.predict()
+        self.begin_forecast = str((data_constructor.begin_forecast + datetime.timedelta(days=self.leftover)).date())
+        self.end_forecast = str(data_constructor.end_forecast.date())
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.

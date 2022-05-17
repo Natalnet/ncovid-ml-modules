@@ -120,7 +120,7 @@ class DataConstructor:
             if leftover != 0:
                 # if needed, remove values from head
                 data = data[leftover:]
-            
+
             return np.array(np.split(data, len(data) // configs_manner.input_window_size)) 
 
         # if self.is_predicting:
