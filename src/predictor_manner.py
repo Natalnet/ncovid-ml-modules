@@ -55,7 +55,17 @@ class PredictorConstructor:
         data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
+        self.__get_periods_from_data_constructor(data_constructor)
         return data_constructor.build_test(data_collected)
+
+    def __get_periods_from_data_constructor(self, data_constructor):
+        # TODO better way to get this variables from data_constructor
+        self.begin_raw = str(data_constructor.begin_raw.date())
+        self.end_raw = str(data_constructor.end_raw.date())
+        self.begin_forecast = str(data_constructor.begin_forecast.date())
+        self.end_forecast = str(data_constructor.end_forecast.date())
+        self.number_of_days_requested = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+        self.number_of_days_available = (datetime.datetime.strptime(self.end_raw, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_raw, "%Y-%m-%d")).days + 1
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
@@ -68,8 +78,8 @@ class PredictorConstructor:
         try:
             y_hat = self.model.predicting(data_X)
             self.raw_y_hat = y_hat.reshape(-1)
-            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days
-            return y_hat.reshape(-1)[-offset_days:]
+            
+            return y_hat.reshape(-1)[-self.number_of_days_requested:]
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."

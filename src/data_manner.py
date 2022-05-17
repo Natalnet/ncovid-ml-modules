@@ -48,7 +48,7 @@ class DataConstructor:
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
             The first dimension represents the number of features. 
-            The second dimension represents the time-serie of each dimension. 
+            The second dimension represents the time-series of each dimension. 
         Returns:
             Train, Test: Train and Test data types
         """
@@ -209,10 +209,16 @@ class DataConstructor:
         # data period available
         self.begin_raw = dataframe.index[0]
         self.end_raw = dataframe.index[-1]
-        preprocessor = self.Preprocessing()
-        _processed_data = preprocessor.pipeline(dataframe)
-        #print(_processed_data[0])
-        self.processed_data_raw = _processed_data[0]
+
+        import datetime       
+
+        # TODO the argument of days should be the lag between input and output, not output_window_size
+        self.begin_forecast =  self.begin_raw + datetime.timedelta(days=configs_manner.input_window_size)
+        self.end_forecast = self.end_raw + datetime.timedelta(days=configs_manner.input_window_size)
+
+        preprocessor = self.Preprocessing()       
+        # # data after preprocessing
+        self.processed_data_raw = preprocessor.pipeline(dataframe)
 
         # check if end is greater than last available forecast (last_day from datamanger + output_window)
         # if self.is_predicting:
@@ -232,7 +238,7 @@ class DataConstructor:
         #         self.new_last_day = self.interpolate_last_day
 
         # self.processed_data_new = _processed_data[0]
-        return _processed_data
+        return self.processed_data_raw
 
     def __add_period(self, begin: str, end: str):
         import datetime
