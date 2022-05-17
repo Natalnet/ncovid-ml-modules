@@ -55,9 +55,33 @@ class PredictorConstructor:
         data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
-        # if predcting, update last possible day for prediction
-        self.end = str(data_constructor.new_last_day.date())
-        return data_constructor.build_predict(data_collected)
+        self.__get_periods_from_data_constructor(data_constructor)
+        return data_constructor.build_test(data_collected)
+
+    # TODO better way to get these variables from data_constructor
+    def __get_periods_from_data_constructor(self, data_constructor):
+        
+        # _raw -> date range from raw data
+        self.begin_raw = str(data_constructor.begin_raw.date())
+        self.end_raw = str(data_constructor.end_raw.date())
+        
+        self.number_of_days_available = (datetime.datetime.strptime(self.end_raw, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_raw, "%Y-%m-%d")).days + 1
+        self.leftover = self.number_of_days_available % configs_manner.input_window_size
+        
+        # _forecast -> date range used as input in model.predict()
+        self.begin_forecast = str((data_constructor.begin_forecast + datetime.timedelta(days=self.leftover)).date())
+        self.end_forecast = str(data_constructor.end_forecast.date())
+
+        # clamp if period requested is outside availbale the forecast window
+        if self.begin < self.begin_forecast:
+            self.begin = self.begin_forecast
+        if self.end > self.end_forecast:
+            self.end = self.end_forecast
+
+        self.number_of_days_requested = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+
+        self.begin_buffer = (datetime.datetime.strptime(self.begin, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_forecast, "%Y-%m-%d")).days
+        self.end_buffer = (datetime.datetime.strptime(self.end_forecast, "%Y-%m-%d") - datetime.datetime.strptime(self.end, "%Y-%m-%d")).days
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
@@ -70,8 +94,10 @@ class PredictorConstructor:
         try:
             y_hat = self.model.predicting(data_X)
             self.raw_y_hat = y_hat.reshape(-1)
-            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days
-            return y_hat.reshape(-1)[-offset_days:]
+            self.y_hat_shape = self.raw_y_hat.shape[0]
+            self.raw_y_hat_tst = y_hat.reshape(-1)[self.begin_buffer:self.raw_y_hat.shape[0]-self.end_buffer]
+            shape = y_hat.reshape(-1).shape[0]
+            return y_hat.reshape(-1)[self.begin_buffer:shape-self.end_buffer]
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
