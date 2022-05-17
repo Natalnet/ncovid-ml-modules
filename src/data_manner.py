@@ -184,9 +184,19 @@ class DataConstructor:
 
             return pd.read_csv(file_name, parse_dates=["date"], index_col="date")
 
+        def __set_periods(self, dataframe):
+            import datetime
+
+            # data period available
+            self.begin_raw = dataframe.index[0]
+            self.end_raw = dataframe.index[-1]
+
+            # TODO the argument of days should be the lag between input and output, not output_window_size
+            self.begin_forecast =  self.begin_raw + datetime.timedelta(days=configs_manner.input_window_size)
+            self.end_forecast = self.end_raw + datetime.timedelta(days=configs_manner.input_window_size)
+
         if repo and feature and begin and end is not None:
             if self.is_predicting:
-                # begin, end = self.__add_period(begin, end)
                 # get the whole time series
                 begin = "2020-01-01"
                 end = "2049-01-01"
@@ -206,66 +216,12 @@ class DataConstructor:
         else:
             dataframe = read_file(path)
 
-        # data period available
-        self.begin_raw = dataframe.index[0]
-        self.end_raw = dataframe.index[-1]
-
-        import datetime       
-
-        # TODO the argument of days should be the lag between input and output, not output_window_size
-        self.begin_forecast =  self.begin_raw + datetime.timedelta(days=configs_manner.input_window_size)
-        self.end_forecast = self.end_raw + datetime.timedelta(days=configs_manner.input_window_size)
-
+        __set_periods(self, dataframe)
         preprocessor = self.Preprocessing()       
-        # # data after preprocessing
+        # data after preprocessing
         self.processed_data_raw = preprocessor.pipeline(dataframe)
 
-        # check if end is greater than last available forecast (last_day from datamanger + output_window)
-        # if self.is_predicting:
-        #     import datetime
-        #     DATE_FORMAT = "%Y-%m-%d"
-        #     _end = datetime.datetime.strptime(end, DATE_FORMAT)
-        #     _df_end = dataframe.index[-1]
-        #     max_predict_date = _df_end + datetime.timedelta(days=7)
-        #     if _end > max_predict_date:
-        #         self.extrapolate_last_day = max_predict_date
-        #         self.new_last_day = self.extrapolate_last_day
-        #     else:
-        #         # remove last input_window_size days
-        #         # TODO replace 7 with input_window_size
-        #         _processed_data[0] = _processed_data[0][:-7]
-        #         self.interpolate_last_day = self.new_last_day - datetime.timedelta(days=7)
-        #         self.new_last_day = self.interpolate_last_day
-
-        # self.processed_data_new = _processed_data[0]
         return self.processed_data_raw
-
-    def __add_period(self, begin: str, end: str):
-        import datetime
-
-        DATE_FORMAT = "%Y-%m-%d"
-
-        begin = datetime.datetime.strptime(begin, DATE_FORMAT)
-        end = datetime.datetime.strptime(end, DATE_FORMAT)
-
-        period_to_add = (end - begin + datetime.timedelta(days=1)).days
-        offset_days = period_to_add + (
-            self.input_window_size - period_to_add % self.input_window_size
-        )
-
-        # buffer days needed to account for moving average (first MA_window days are n/a)
-        extended_offset_days = offset_days + self.moving_average_window_size + 10
-
-        # last 7-days needed to get predictions
-        self.new_last_day = end - datetime.timedelta(days=self.input_window_size)
-
-        # greater multiple of 7 lower than begin minus the buffer days to calculate moving average
-        self.new_first_day = self.new_last_day - datetime.timedelta(days=extended_offset_days)
-
-        return (
-            self.new_first_day.strftime(DATE_FORMAT),
-            self.new_last_day.strftime(DATE_FORMAT),
-        )
 
     class Preprocessing:
         def __init__(self):
@@ -304,8 +260,6 @@ class DataConstructor:
             dataframe_columns_elegible = self.select_columns_with_values(
                 dataframe_not_cumulative
             )
-
-            # dataframe_rolled = self.moving_average(dataframe_columns_elegible)
 
             dataframe_as_list = self.convert_dataframe_to_list(dataframe_columns_elegible)
 

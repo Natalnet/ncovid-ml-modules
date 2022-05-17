@@ -57,7 +57,7 @@ class PredictorConstructor:
         )
         self.__get_periods_from_data_constructor(data_constructor)
         return data_constructor.build_test(data_collected)
-        
+
     # TODO better way to get these variables from data_constructor
     def __get_periods_from_data_constructor(self, data_constructor):
         
@@ -81,7 +81,7 @@ class PredictorConstructor:
         self.number_of_days_requested = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
 
         self.begin_buffer = (datetime.datetime.strptime(self.begin, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_forecast, "%Y-%m-%d")).days
-        self.end_buffer = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.end_forecast, "%Y-%m-%d")).days
+        self.end_buffer = (datetime.datetime.strptime(self.end_forecast, "%Y-%m-%d") - datetime.datetime.strptime(self.end, "%Y-%m-%d")).days
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
