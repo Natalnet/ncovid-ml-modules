@@ -112,18 +112,20 @@ class DataConstructor:
         pass
 
     def _build_data_Artificial(self, data_type, data):
-        def __windowing_data(self, data):
+        def __windowing_data(data):
             if data.shape[0] < data.shape[1]:
                 data = data.T
-            leftover = data.shape[0] % configs_manner.input_window_size
+            
+            leftover = data.shape[0] % configs_manner.input_window_size            
             if leftover != 0:
                 # if needed, remove values from head
                 data = data[leftover:]
+            
             return np.array(np.split(data, len(data) // configs_manner.input_window_size)) 
 
         # if self.is_predicting:
         data = self.__transpose_data(data)
-        data = __windowing_data(self, data)
+        data = __windowing_data(data)        
         return data_type(data, configs_manner.input_window_size, self.type_norm)
 
     def __transpose_data(self, data):
@@ -184,7 +186,7 @@ class DataConstructor:
 
         if repo and feature and begin and end is not None:
             if self.is_predicting:
-                begin, end = self.__add_period(begin, end)
+                # begin, end = self.__add_period(begin, end)
                 # get the whole time series
                 begin = "2020-01-01"
                 end = "2049-01-01"

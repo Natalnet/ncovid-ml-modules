@@ -55,8 +55,6 @@ class PredictorConstructor:
         data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
-        # if predcting, update last possible day for prediction
-        self.end = str(data_constructor.new_last_day.date())
         return data_constructor.build_test(data_collected)
 
     def predict(self, data_X=None):
