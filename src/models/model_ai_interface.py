@@ -97,16 +97,17 @@ class ModelArtificalInterface(ModelInterface):
                 )
                 self.uuid_model = model_id
             else:
+                # TODO if model_id == None it will crash since configs_manner.model_id only exits if configs_manner.overwrite is called (passing a json that declares model_id)
                 self.model = tf.keras.models.load_model(
-                    self._resolve_model_name(configs_manner.model)
+                    self._resolve_model_name(configs_manner.model_id)
                 )
         except OSError:
             try:
-                uuid_model = self._resolve_model_name(
-                    configs_manner.model, True
-                )
+                # configs_manner.model_id is more general but it crashes if running locally (with no metadata.json and no configs_manner.overwrite)
+                # TODO if model_id == None it will crash
+                uuid_model = model_id
                 model_web_content = requests.get(
-                    self._resolve_model_name(uuid_model)
+                    self._resolve_model_name(uuid_model, True)
                 ).content
                 model_bin = io.BytesIO(model_web_content)
                 model_obj = h5py.File(model_bin, "r")
