@@ -6,7 +6,7 @@
     "docs_path": "../doc/",
     "data_path": "../dbs/",
     "model_path": "fitted_model/",
-    "model_path_remote": "https://",
+    "model_path_remote": "http://ncovid.natalnet.br/storage/models/",
     "glossary_file": "glossary.json"
   },
   "model_configs": {
