@@ -239,5 +239,5 @@ dependencies:
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.9=haebb681_0
   - pip:
-    - numpy==1.19.5
+    - numpy==1.19.2
 prefix: /home/$USERNAME/anaconda3/envs/ncovid_ml
