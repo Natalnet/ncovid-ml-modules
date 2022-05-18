@@ -98,12 +98,12 @@ class ModelArtificalInterface(ModelInterface):
                 self.uuid_model = model_id
             else:
                 tf.keras.models.load_model(
-                    self._resolve_model_name(configs_manner.model_id)
+                    self._resolve_model_name(configs_manner.model)
                 )
         except OSError:
             try:
                 uuid_model = self._resolve_model_name(
-                    configs_manner.model_id, True
+                    configs_manner.model, True
                 )
                 model_web_content = requests.get(
                     self._resolve_model_name(uuid_model)
