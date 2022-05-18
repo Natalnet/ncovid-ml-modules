@@ -13,9 +13,11 @@ import configs_manner
 )
 def lstm(repo, path, feature, begin, end):
     info_json = json.loads(request.form.get("metadata"))
-    configs_manner.overwrite(info_json)
+    configs_manner.overwrite(dict(info_json))
+    # TODO currently configs_manner gets last model from configure.json, witch is 'sir' in metadata of online models (17-05-2022)
+    configs_manner.model = 'lstm'
     predictor_obj = predictor_manner.PredictorConstructor(
-        configs_manner.model_infos["model_id"], path, repo, feature, begin, end
+        configs_manner.model_id, path, repo, feature, begin, end
     )
     response = predictor_obj.predict()
     response_json = jsonify(predictor_obj.predictions_to_weboutput(response))

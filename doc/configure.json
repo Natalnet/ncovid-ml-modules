@@ -6,40 +6,35 @@
     "docs_path": "../doc/",
     "data_path": "../dbs/",
     "model_path": "fitted_model/",
-    "model_path_remote": "https://",
+    "model_path_remote": "http://ncovid.natalnet.br/storage/models/",
     "glossary_file": "glossary.json"
   },
   "model_configs": {
     "type_used": "Artificial",
-    "is_predicting": "False",
+    "is_predicting": false,
     "Artificial": {
       "model": "lstm",
       "nodes": 300,
-      "epochs": 100,
-      "dropout": 0.1,
+      "epochs": 300,
+      "dropout": 0.05,
       "batch_size": 64,
-      "earlystop": 30,
-      "is_output_in_input": "True",
+      "earlystop": 50,
+      "is_output_in_input": true,
       "data_configs": {
-        "is_accumulated_values": "False",
-        "is_apply_moving_average": "True",
-        "window_size": 7,
+        "is_apply_differencing": false,
+        "is_apply_moving_average": true,
+        "moving_average_window_size": 7,
+        "input_window_size": 7,
+        "overlap_in_samples": 6,
+        "output_window_size": 7,
         "data_test_size_in_days": 35,
-        "type_norm": ""
-      },
-      "Autoregressive": {
-        "model": "arima",
-        "p": 1,
-        "d": 1,
-        "q": 1
-      },
-      "Epidemiological": {
-        "model": "sir",
-        "s_initial": 100,
-        "i_initial": 1,
-        "e_initial": 1,
-        "r_initial": 0,
-        "d_initial": 0
+        "type_norm": "",
+        "repo": "p971074907",
+        "path": "brl:rn",
+        "input_features": "newDeaths",
+        "output_features": "newDeaths",
+        "date_begin": "2020-05-01",
+        "date_end": "2022-04-17"
       }
     }
   }

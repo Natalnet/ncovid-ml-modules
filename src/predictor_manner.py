@@ -6,14 +6,13 @@ import data_manner
 import configs_manner
 
 exec(
-    f"from models.{configs_manner.model_type.lower()} import {configs_manner.model_subtype}_manner as model_manner"
+    f"from models.{configs_manner.type_used.lower()} import {configs_manner.model}_manner as model_manner"
 )
 
 
 class PredictorConstructor:
     def __init__(self, model_id, path, repo=None, feature=None, begin=None, end=None):
         """Predictor designed to forecast values through trained models.
-
         Args:
             path (string): [description]
             repo (string, optional): The key number of the repository to data acquisition. Defaults to None.
@@ -27,8 +26,10 @@ class PredictorConstructor:
         self.feature = feature
         self.begin = begin
         self.end = end
+        self.raw_y_hat = None
         try:
-            self.data_X = self.__data_collector(path, repo, feature, begin, end).x
+            self.data_to_train_model = self.__data_collector(path, repo, feature, begin, end)
+            self.data_X = self.data_to_train_model.x
             self.model = self.__model_assemble(model_id)
             logger.debug_log(
                 self.__class__.__name__,
@@ -41,7 +42,7 @@ class PredictorConstructor:
             )
 
     def __get_model_obj(self, model_id):
-        model = "Model" + str(configs_manner.model_subtype.upper())
+        model = "Model" + str(configs_manner.model.upper())
         return getattr(model_manner, model)(model_id)
 
     def __model_assemble(self, model_id):
@@ -54,21 +55,49 @@ class PredictorConstructor:
         data_collected = data_constructor.collect_dataframe(
             path, repo, feature, begin, end
         )
+        self.__get_periods_from_data_constructor(data_constructor)
         return data_constructor.build_test(data_collected)
+
+    # TODO better way to get these variables from data_constructor
+    def __get_periods_from_data_constructor(self, data_constructor):
+        
+        # _raw -> date range from raw data
+        self.begin_raw = str(data_constructor.begin_raw.date())
+        self.end_raw = str(data_constructor.end_raw.date())
+        
+        self.number_of_days_available = (datetime.datetime.strptime(self.end_raw, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_raw, "%Y-%m-%d")).days + 1
+        self.leftover = self.number_of_days_available % configs_manner.input_window_size
+        
+        # _forecast -> date range used as input in model.predict()
+        self.begin_forecast = str((data_constructor.begin_forecast + datetime.timedelta(days=self.leftover)).date())
+        self.end_forecast = str(data_constructor.end_forecast.date())
+
+        # clamp if period requested is outside availbale the forecast window
+        if self.begin < self.begin_forecast:
+            self.begin = self.begin_forecast
+        if self.end > self.end_forecast:
+            self.end = self.end_forecast
+
+        self.number_of_days_requested = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+
+        self.begin_buffer = (datetime.datetime.strptime(self.begin, "%Y-%m-%d") - datetime.datetime.strptime(self.begin_forecast, "%Y-%m-%d")).days
+        self.end_buffer = (datetime.datetime.strptime(self.end_forecast, "%Y-%m-%d") - datetime.datetime.strptime(self.end, "%Y-%m-%d")).days
 
     def predict(self, data_X=None):
         """This method forecast deaths values to data in the constructor object from begin to end date.
-
         Args:
             data_X (data.x, optional): data.x variable to predict. Defaults to None.
-
         Returns:
             string: A string containing the forecasting values and them respective date. 
         """
         data_X = data_X if data_X is not None else self.data_X
         try:
             y_hat = self.model.predicting(data_X)
-            return y_hat.reshape(-1)
+            self.raw_y_hat = y_hat.reshape(-1)
+            self.y_hat_shape = self.raw_y_hat.shape[0]
+            self.raw_y_hat_tst = y_hat.reshape(-1)[self.begin_buffer:self.raw_y_hat.shape[0]-self.end_buffer]
+            shape = y_hat.reshape(-1).shape[0]
+            return y_hat.reshape(-1)[self.begin_buffer:shape-self.end_buffer]
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.__init__.__name__, f"Error: {e}."
@@ -77,13 +106,13 @@ class PredictorConstructor:
 
     def predictions_to_weboutput(self, y_hat):
         period = pd.date_range(self.begin, self.end)
-        returned_dictionaty = list()
+        returned_dictionary = list()
         for date, value in zip(period, y_hat):
-            returned_dictionaty.append(
+            returned_dictionary.append(
                 {
                     "date": datetime.datetime.strftime(date, "%Y-%m-%d"),
                     "prediction": str(value),
                 }
             )
 
-        return returned_dictionaty
+        return returned_dictionary

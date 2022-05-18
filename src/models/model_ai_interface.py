@@ -21,23 +21,23 @@ from models.model_interface import ModelInterface
 class ModelArtificalInterface(ModelInterface):
     def __init__(self, locale: str):
         super().__init__(locale)
-        self.nodes = configs_manner.model_infos["model_nodes"]
-        self.epochs = configs_manner.model_infos["model_epochs"]
-        self.dropout = configs_manner.model_infos["model_dropout"]
-        self.batch_size = configs_manner.model_infos["model_batch_size"]
-        self.is_output_in_input = configs_manner.model_infos["model_is_output_in_input"]
-        self.is_predicting = configs_manner.model_is_predicting
-        self.data_window_size = configs_manner.model_infos["data_window_size"]
+        self.uuid_model = None
+        self.nodes = configs_manner.nodes
+        self.epochs = configs_manner.epochs
+        self.dropout = configs_manner.dropout
+        self.batch_size = configs_manner.batch_size
+        self.is_output_in_input = configs_manner.is_output_in_input
+        self.is_predicting = configs_manner.is_predicting
+        self.data_window_size = configs_manner.input_window_size
+        self.output_window_size = configs_manner.output_window_size
         self.earlystop = EarlyStopping(
             monitor="loss",
             mode="min",
             verbose=0,
-            patience=configs_manner.model_infos["model_earlystop"],
+            patience=configs_manner.earlystop,
         )
-        self.n_features = configs_manner.model_infos["data_n_features"]
-        self.data_test_size_in_days = configs_manner.model_infos[
-            "data_test_size_in_days"
-        ]
+        self.n_features = configs_manner.data_n_features
+        self.data_test_size_in_days = configs_manner.data_test_size_in_days
 
     def _resolve_model_name(self, model_id, is_remote=False):
         return (
@@ -50,29 +50,36 @@ class ModelArtificalInterface(ModelInterface):
         return str(uuid.uuid1())
 
     def __saving_metadata_file(self, model_id, model_name):
-        with open(configs_manner.doc_folder + "configure.json") as json_file:
-            data = json.load(json_file)
-            metadata = {}
-            metadata["folder_configs"] = {
-                "model_remote_path": configs_manner.model_path_remote
-            }
-            metadata["model_configs"] = {
-                "model_id": model_id,
-                "type_used": configs_manner.model_type,
-                "is_predicting": configs_manner.model_is_predicting,
-                configs_manner.model_type: data["model_configs"][
-                    configs_manner.model_type
-                ],
-            }
+        
+        metadata = {}
+        
+        initial_data_format = ended_data_format = "daily"
+        if configs_manner.is_apply_differencing:
+            initial_data_format = "accumulated"
+        if configs_manner.is_apply_moving_average:
+            ended_data_format = "moving-average"
+        
+        configs_manner.data_configs["initial_data_format"] = initial_data_format
+        configs_manner.data_configs["ended_data_format"] = ended_data_format
+        
+        metadata["folder_configs"] = {
+            "model_remote_path": configs_manner.model_path_remote
+        }
+        metadata["model_configs"] = {"model_id": model_id}
+        metadata["model_configs"].update(configs_manner.model_configs)
+            
+        with open(
+            configs_manner.docs_path + "metadata" + model_name + ".json", "w"
+        ) as json_to_save:
+            json.dump(metadata, json_to_save, indent=4)
 
-            with open(
-                configs_manner.doc_folder + "metadata" + model_name + ".json", "w"
-            ) as json_to_save:
-                json.dump(metadata, json_to_save, indent=4)
+    def saving(self, model_name, overwrite=False):
+        if self.uuid_model is None:
+            self.uuid_model = model_id_to_save = self.__model_id_generate()
+        else:
+            model_id_to_save = self.uuid_model
 
-    def saving(self, model_name):
-        model_id_to_save = self.__model_id_generate()
-        self.model.save(self._resolve_model_name(model_id_to_save))
+        self.model.save(self._resolve_model_name(model_id_to_save), overwrite)
         self.__saving_metadata_file(model_id_to_save, model_name)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
@@ -84,23 +91,28 @@ class ModelArtificalInterface(ModelInterface):
             ose: Exception OSError if model not found locally or remotely
         """
         try:
-            self.model = (
-                tf.keras.models.load_model(self._resolve_model_name(model_id))
-                if model_id
-                else tf.keras.models.load_model(
-                    self._resolve_model_name(configs_manner.model_infos["model_id"])
+            if model_id is not None:
+                self.model = tf.keras.models.load_model(
+                    self._resolve_model_name(model_id)
                 )
-            )
+                self.uuid_model = model_id
+            else:
+                # TODO if model_id == None it will crash since configs_manner.model_id only exits if configs_manner.overwrite is called (passing a json that declares model_id)
+                self.model = tf.keras.models.load_model(
+                    self._resolve_model_name(configs_manner.model_id)
+                )
         except OSError:
             try:
+                # configs_manner.model_id is more general but it crashes if running locally (with no metadata.json and no configs_manner.overwrite)
+                # TODO if model_id == None it will crash
+                uuid_model = model_id
                 model_web_content = requests.get(
-                    self._resolve_model_name(
-                        configs_manner.model_infos["model_id"], True
-                    )
+                    self._resolve_model_name(uuid_model, True)
                 ).content
                 model_bin = io.BytesIO(model_web_content)
                 model_obj = h5py.File(model_bin, "r")
                 self.model = tf.keras.models.load_model(model_obj)
+                self.uuid_model = uuid_model
 
             except OSError as ose:
                 logger.error_log(
@@ -319,11 +331,11 @@ class ModelArtificalInterface(ModelInterface):
         return score, score_test, score_train
 
     def param_value(self, param_name: str):
-        return configs_manner.model_infos["model_" + param_name]
+        return configs_manner.param_name
 
     def _extract_param_value(self, param_name: str):
-        if "model_" + param_name in configs_manner.model_infos:
-            return configs_manner.model_infos["model_" + param_name]
+        if param_name in configs_manner:
+            return configs_manner.param_name
         return None
 
     def _params_self_modify(
