@@ -97,7 +97,7 @@ class ModelArtificalInterface(ModelInterface):
                 )
                 self.uuid_model = model_id
             else:
-                tf.keras.models.load_model(
+                self.model = tf.keras.models.load_model(
                     self._resolve_model_name(configs_manner.model)
                 )
         except OSError:
