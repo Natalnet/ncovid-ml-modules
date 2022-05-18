@@ -149,7 +149,7 @@ class Evaluator:
         evals = {}
         for idx, param in enumerate(model_configs):
             for idx_value, new_config in enumerate(model_configs[param]):
-                configs_manner.model_infos["model_" + param] = new_config
+                configs_manner.add_variable_to_globals(param, new_config)
                 model.creating()
                 evals[str(idx) + "." + str(idx_value)] = self.evaluate_model_n_times(
                     model=model,
@@ -163,8 +163,8 @@ class Evaluator:
 
     def _extracting_mse(model: "ModelInterface", data: "Data") -> dict:
         test_period = (
-            configs_manner.model_infos["data_test_size_in_days"]
-            // configs_manner.model_infos["data_window_size"]
+            configs_manner.data_test_size_in_days
+            // configs_manner.window_size
         )
 
         yhat = model.predicting(data.x)
@@ -180,8 +180,8 @@ class Evaluator:
 
     def _extracting_rmse(model: "ModelInterface", data: "Data") -> dict:
         test_period = (
-            configs_manner.model_infos["data_test_size_in_days"]
-            // configs_manner.model_infos["data_window_size"]
+            configs_manner.data_test_size_in_days
+            // configs_manner.data_window_size
         )
 
         yhat = model.predicting(data.x)
@@ -201,10 +201,10 @@ class Evaluator:
 
     def _extracting_mae(model: "ModelInterface", data: "Data") -> dict:
         test_period = (
-            configs_manner.model_infos["data_test_size_in_days"]
-            // configs_manner.model_infos["data_window_size"]
+            configs_manner.data_test_size_in_days
+            // configs_manner.window_size
         )
-        dws = configs_manner.model_infos["data_window_size"]
+        dws = configs_manner.window_size
 
         yhat = model.predicting(data.x)
         mae = model.calculate_mae(data.y, yhat)
@@ -219,10 +219,10 @@ class Evaluator:
 
     def _extracting_mape(model: "ModelInterface", data: "Data") -> dict:
         test_period = (
-            configs_manner.model_infos["data_test_size_in_days"]
-            // configs_manner.model_infos["data_window_size"]
+            configs_manner.data_test_size_in_days
+            // configs_manner.window_size
         )
-        dws = configs_manner.model_infos["data_window_size"]
+        dws = configs_manner.window_size
 
         yhat = model.predicting(data.x)
         mape = model.calculate_mape(data.y, yhat)
@@ -239,7 +239,7 @@ class Evaluator:
 
     def _extracting_r2(model: "ModelInterface", data: "Data") -> dict:
 
-        test_size = configs_manner.model_infos["data_test_size_in_days"]
+        test_size = configs_manner.data_test_size_in_days
 
         yhat = model.predicting(data.x)
         r2_total = model.calculate_r2(data.y.reshape(-1), yhat.reshape(-1))
@@ -258,7 +258,7 @@ class Evaluator:
 
     def _extracting_cc(model: "ModelInterface", data: "Data") -> dict:
 
-        test_size = configs_manner.model_infos["data_test_size_in_days"]
+        test_size = configs_manner.data_test_size_in_days
 
         yhat = model.predicting(data.x)
         cc_total = model.calculate_cc(data.y.reshape(-1), yhat.reshape(-1))
