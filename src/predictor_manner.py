@@ -1,5 +1,6 @@
 import datetime
 import pandas as pd
+import json
 
 import logger
 import data_manner
@@ -11,7 +12,9 @@ exec(
 
 
 class PredictorConstructor:
-    def __init__(self, model_id, path, repo=None, feature=None, begin=None, end=None):
+    def __init__(
+        self, model_id, path=None, repo=None, feature=None, begin=None, end=None
+    ):
         """Predictor designed to forecast values through trained models.
 
         Args:
@@ -21,14 +24,17 @@ class PredictorConstructor:
             begin (string, optional): Date to start the forecasting. Defaults to None.
             end (string, optional): Date to finish the forecasting. Defaults to None.
         """
+        self.__load_data_infos_from_metadata(model_id)
         self.model_id = model_id
-        self.path = path
-        self.repo = repo
-        self.feature = feature
+        self.path = configs_manner.path
+        self.repo = configs_manner.repo
+        self.feature = configs_manner.inputFeatures
         self.begin = begin
         self.end = end
         try:
-            self.data_to_train_model = self.__data_collector(path, repo, feature, begin, end)
+            self.data_to_train_model = self.__data_collector(
+                self.path, self.repo, self.feature, self.begin, end
+            )
             self.data_X = self.data_to_train_model.x
             self.model = self.__model_assemble(model_id)
             logger.debug_log(
@@ -50,6 +56,11 @@ class PredictorConstructor:
         model_obj.loading(model_id)
         return model_obj
 
+    def __load_data_infos_from_metadata(self, model_id):
+        with open(configs_manner.metadata_path + model_id + ".json") as json_file:
+            self.model_metadata = json.load(json_file)
+        configs_manner.add_all_configures_to_globals(self.model_metadata)
+
     def __data_collector(self, path, repo=None, feature=None, begin=None, end=None):
         data_constructor = data_manner.DataConstructor(is_predicting=True)
         data_collected = data_constructor.collect_dataframe(
@@ -64,12 +75,15 @@ class PredictorConstructor:
             data_X (data.x, optional): data.x variable to predict. Defaults to None.
 
         Returns:
-            string: A string containing the forecasting values and them respective date. 
+            string: A string containing the forecasting values and them respective date.
         """
         data_X = data_X if data_X is not None else self.data_X
         try:
             y_hat = self.model.predicting(data_X)
-            offset_days = (datetime.datetime.strptime(self.end, "%Y-%m-%d") - datetime.datetime.strptime(self.begin, "%Y-%m-%d")).days + 1
+            offset_days = (
+                datetime.datetime.strptime(self.end, "%Y-%m-%d")
+                - datetime.datetime.strptime(self.begin, "%Y-%m-%d")
+            ).days + 1
             return y_hat.reshape(-1)[-offset_days:]
         except Exception as e:
             logger.error_log(

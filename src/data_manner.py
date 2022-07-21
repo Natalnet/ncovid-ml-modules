@@ -11,9 +11,9 @@ class DataConstructor:
     def __init__(self, is_predicting: bool = False) -> "DataConstructor":
         """Data manager designed to collect and prepare data for the project.
         More details look up at doc/configure.json file.
-        
+
         Args:
-            is_predicting (bool, optional): Flag that descripts if data is for testing. 
+            is_predicting (bool, optional): Flag that descripts if data is for testing.
             Defaults extracted from configure.json.
         """
 
@@ -47,8 +47,8 @@ class DataConstructor:
 
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
-            The first dimension represents the number of features. 
-            The second dimension represents the time-serie of each dimension. 
+            The first dimension represents the number of features.
+            The second dimension represents the time-serie of each dimension.
 
         Returns:
             Train, Test: Train and Test data types
@@ -66,20 +66,22 @@ class DataConstructor:
 
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
-            The first dimension represents the number of features. 
-            The second dimension represents the time-serie of each dimension. 
+            The first dimension represents the number of features.
+            The second dimension represents the time-serie of each dimension.
 
         Returns:
-            Train: Train data type 
+            Train: Train data type
         """
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
-            self.__class__.__name__, self.build_train.__name__, "Format data",
+            self.__class__.__name__,
+            self.build_train.__name__,
+            "Format data",
         )
-        assert (configs_manner.input_window_size - configs_manner.overlap_in_samples) >= 1, "invalid overlap value"
+        assert (
+            configs_manner.input_window_size - configs_manner.overlap_in_samples
+        ) >= 1, "invalid overlap value"
         try:
-            return getattr(self, f"_build_data_{configs_manner.type_used}")(
-                Train, data
-            )
+            return getattr(self, f"_build_data_{configs_manner.type_used}")(Train, data)
         except Exception as e:
             logger.error_log(
                 self.__class__.__name__, self.build_train.__name__, f"Error: {e}."
@@ -91,14 +93,16 @@ class DataConstructor:
 
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
-            The first dimension represents the number of features. 
-            The second dimension represents the time-serie of each dimension. 
+            The first dimension represents the number of features.
+            The second dimension represents the time-serie of each dimension.
 
         Returns:
-            Test: Test data type 
+            Test: Test data type
         """
         assert type(data) == np.ndarray or type(data) == list, logger.error_log(
-            self.__class__.__name__, self.build_test.__name__, "Format data",
+            self.__class__.__name__,
+            self.build_test.__name__,
+            "Format data",
         )
         try:
             return getattr(self, f"_build_data_{configs_manner.type_used}")(Test, data)
@@ -138,8 +142,8 @@ class DataConstructor:
 
         Args:
             data (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
-            The first dimension represents the number of features. 
-            The second dimension represents the time-serie of each dimension. 
+            The first dimension represents the number of features.
+            The second dimension represents the time-serie of each dimension.
 
         Returns:
             train and test (list[list]): bi-dimensional data numpy array that needs to be prepared for the model.
@@ -156,9 +160,13 @@ class DataConstructor:
     def __updating_data_info_metadata(self, path, repo, features, begin, end):
         configs_manner.add_variable_to_globals("data_repo", repo)
         configs_manner.add_variable_to_globals("data_path", path)
-        start_inputs = (1 if configs_manner.is_output_in_input else 2)
-        configs_manner.add_variable_to_globals("data_input_features", features.split(":")[start_inputs:-1])
-        configs_manner.add_variable_to_globals("data_output_features", features.split(":")[1])
+        start_inputs = 1 if configs_manner.is_output_in_input else 2
+        configs_manner.add_variable_to_globals(
+            "data_input_features", features.split(":")[start_inputs:-1]
+        )
+        configs_manner.add_variable_to_globals(
+            "data_output_features", features.split(":")[1]
+        )
         configs_manner.add_variable_to_globals("data_date_begin", begin)
         configs_manner.add_variable_to_globals("data_date_end", end)
 
@@ -171,11 +179,11 @@ class DataConstructor:
         end: str = None,
     ) -> np.array or list:
         """Collect a dataframe from the repository or web
-        
+
         Args:
             path (str): a raw web link or db locale to be predicted (eg. `brl:rn`)
             repo (str, optional): DB repository that contains the dataframe. Defaults to None.
-            feature (str, optional): Features separated by `:`, presented in the dataframe(eg. `date:deaths:newCases:`). 
+            feature (str, optional): Features separated by `:`, presented in the dataframe(eg. `date:deaths:newCases:`).
                 Defaults to None.
             begin (str, optional): First day of the temporal time series `YYYY-MM-DD`. Defaults to None.
             end (str, optional): Last day of the temporal time series `YYYY-MM-DD`. Defaults to None.
@@ -282,15 +290,15 @@ class DataConstructor:
             dataframe_as_list = self.convert_dataframe_to_list(dataframe_rolled)
 
             logger.debug_log(
-                self.__class__.__name__, self.pipeline.__name__, "Pipeline finished",
+                self.__class__.__name__,
+                self.pipeline.__name__,
+                "Pipeline finished",
             )
             return dataframe_as_list
 
         def solve_cumulative(self, dataframe: pd.DataFrame) -> pd.DataFrame:
             if configs_manner.is_apply_differencing:
-                return dataframe.diff(
-                    configs_manner.input_window_size
-                ).dropna()
+                return dataframe.diff(configs_manner.input_window_size).dropna()
             return dataframe
 
         def moving_average(self, dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -414,9 +422,9 @@ class Test(Data):
         """
         try:
             super().__init__(step_size, type_norm)
-            self.x, self.y = getattr(
-                self, f"_builder_test_{configs_manner.type_used}"
-            )(data)
+            self.x, self.y = getattr(self, f"_builder_test_{configs_manner.type_used}")(
+                data
+            )
             logger.debug_log(
                 self.__class__.__name__, self.__init__.__name__, "Data Test Created"
             )
@@ -435,11 +443,7 @@ class Test(Data):
 
     def _builder_test_Artificial(self, data):
 
-        x = (
-            data[:-1, :, :]
-            if configs_manner.is_output_in_input
-            else data[:-1, :, 1:]
-        )
+        x = data[:-1, :, :] if configs_manner.is_output_in_input else data[:-1, :, 1:]
 
         configs_manner.add_variable_to_globals("data_n_features", x.shape[-1])
 

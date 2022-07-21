@@ -1,5 +1,6 @@
 import io, requests, h5py, uuid, json
 from typing import Tuple
+from datetime import date, datetime
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping
@@ -49,38 +50,64 @@ class ModelArtificalInterface(ModelInterface):
     def __model_id_generate(self):
         return str(uuid.uuid1())
 
-    def __saving_metadata_file(self, model_id, model_name):
-        
+    def __old_saving_metadata_file(self, model_id, model_name):
+
         metadata = {}
-        
+
         initial_data_format = ended_data_format = "daily"
         if configs_manner.is_apply_differencing:
             initial_data_format = "accumulated"
         if configs_manner.is_apply_moving_average:
             ended_data_format = "moving-average"
-        
+
         configs_manner.data_configs["initial_data_format"] = initial_data_format
         configs_manner.data_configs["ended_data_format"] = ended_data_format
-        
+
         metadata["folder_configs"] = {
             "model_remote_path": configs_manner.model_path_remote
         }
         metadata["model_configs"] = {"model_id": model_id}
         metadata["model_configs"].update(configs_manner.model_configs)
-            
+
         with open(
             configs_manner.docs_path + "metadata" + model_name + ".json", "w"
         ) as json_to_save:
             json.dump(metadata, json_to_save, indent=4)
 
-    def saving(self, model_name, overwrite=False):
+    def __saving_metadata_file(self, model_id):
+        self.metadata = self._gen_model_metada(model_id)
+        with open(
+            configs_manner.metadata_path + model_id + ".json", "w"
+        ) as json_to_save:
+            json.dump(self.metadata, json_to_save, indent=4)
+
+    def _gen_model_metada(self, model_id):
+        metadata_dict = {
+            "instance_id": model_id,
+            "score": self.score,
+            "model_category": "recurrent",
+            "model_type": configs_manner.model,
+            "data_of_training": datetime.now().strftime("%Y-%m-%d " "%H:%M:%S"),
+            "data_infos": {
+                "path": configs_manner.path,
+                "repo": configs_manner.repo,
+                "data_begin_date": configs_manner.begin,
+                "data_end_date": configs_manner.end,
+                "inputFeatures": configs_manner.inputFeatures,
+                "inputWindowSize": configs_manner.inputWindowSize,
+            },
+            "params": configs_manner.modelConfigs,
+        }
+        return metadata_dict
+
+    def saving(self, overwrite=False):
         if self.uuid_model is None:
             self.uuid_model = model_id_to_save = self.__model_id_generate()
         else:
             model_id_to_save = self.uuid_model
 
         self.model.save(self._resolve_model_name(model_id_to_save), overwrite)
-        self.__saving_metadata_file(model_id_to_save, model_name)
+        self.__saving_metadata_file(model_id_to_save)
         logger.debug_log(self.__class__.__name__, self.saving.__name__, "Model Saved")
 
     def loading(self, model_id: str = None):
@@ -102,9 +129,7 @@ class ModelArtificalInterface(ModelInterface):
                 )
         except OSError:
             try:
-                uuid_model = self._resolve_model_name(
-                    configs_manner.model_id, True
-                )
+                uuid_model = self._resolve_model_name(configs_manner.model_id, True)
                 model_web_content = requests.get(
                     self._resolve_model_name(uuid_model)
                 ).content
@@ -134,7 +159,7 @@ class ModelArtificalInterface(ModelInterface):
             verbose (int, optional): Lied to observe the fit model in run time. Defaults to 0.
 
         Returns:
-            bool: True if everything finish well 
+            bool: True if everything finish well
         """
         try:
             self.model.fit(
@@ -162,7 +187,7 @@ class ModelArtificalInterface(ModelInterface):
             X (Test): data to make predictions
 
         Returns:
-            y_hat: predictions 
+            y_hat: predictions
         """
         yhat = self.model.predict(X, verbose=0)
 
